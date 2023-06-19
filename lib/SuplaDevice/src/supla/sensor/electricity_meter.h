@@ -17,17 +17,16 @@
 #ifndef _electricity_meter_h
 #define _electricity_meter_h
 
-#include <Arduino.h>
-
 #include "../channel_extended.h"
 #include "../element.h"
+#include "../local_action.h"
 #include <supla-common/srpc.h>
 
 #define MAX_PHASES 3
 
 namespace Supla {
 namespace Sensor {
-class ElectricityMeter : public Element {
+class ElectricityMeter : public Element, public LocalAction {
  public:
   ElectricityMeter();
 
@@ -54,13 +53,13 @@ class ElectricityMeter : public Element {
   // Frequency in 0.01 Hz
   void setFreq(unsigned _supla_int16_t freq);
 
-  // power in 0.00001 kW
+  // power in 0.00001 W
   void setPowerActive(int phase, _supla_int_t power);
 
-  // power in 0.00001 kvar
+  // power in 0.00001 var
   void setPowerReactive(int phase, _supla_int_t power);
 
-  // power in 0.00001 kVA
+  // power in 0.00001 VA
   void setPowerApparent(int phase, _supla_int_t power);
 
   // power in 0.001
@@ -68,6 +67,42 @@ class ElectricityMeter : public Element {
 
   // phase angle in 0.1 degree
   void setPhaseAngle(int phase, _supla_int_t phaseAngle);
+
+  // energy 1 == 0.00001 kWh
+  unsigned _supla_int64_t getFwdActEnergy(int phase);
+
+  // energy 1 == 0.00001 kWh
+  unsigned _supla_int64_t getRvrActEnergy(int phase);
+
+  // energy 1 == 0.00001 kWh
+  unsigned _supla_int64_t getFwdReactEnergy(int phase);
+
+  // energy 1 == 0.00001 kWh
+  unsigned _supla_int64_t getRvrReactEnergy(int phase);
+
+  // voltage 1 == 0.01 V
+  unsigned _supla_int16_t getVoltage(int phase);
+
+  // current 1 == 0.001 A
+  unsigned _supla_int_t getCurrent(int phase);
+
+  // Frequency 1 == 0.01 Hz
+  unsigned _supla_int16_t getFreq();
+
+  // power 1 == 0.00001 W
+  _supla_int_t getPowerActive(int phase);
+
+  // power 1 == 0.00001 var
+  _supla_int_t getPowerReactive(int phase);
+
+  // power 1 == 0.00001 VA
+  _supla_int_t getPowerApparent(int phase);
+
+  // power 1 == 0.001
+  _supla_int_t getPowerFactor(int phase);
+
+  // phase angle 1 == 0.1 degree
+  _supla_int_t getPhaseAngle(int phase);
 
   void resetReadParameters();
 
@@ -82,17 +117,20 @@ class ElectricityMeter : public Element {
   // methods:
   // readValuesFromDevice();
   // updateChannelValues();
-  void onInit();
+  void onInit() override;
 
-  void iterateAlways();
+  void iterateAlways() override;
 
   // Implement this method to reset stored energy value (i.e. to set energy
   // counter back to 0 kWh
   virtual void resetStorage();
 
-  void setResreshRate(unsigned int sec);
+  void setRefreshRate(unsigned int sec);
 
-  Channel *getChannel();
+  Channel *getChannel() override;
+
+  virtual void addAction(int action, ActionHandler &client, Supla::Condition *condition);
+  virtual void addAction(int action, ActionHandler *client, Supla::Condition *condition);
 
  protected:
   TElectricityMeter_ExtendedValue_V2 emValue;

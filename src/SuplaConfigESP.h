@@ -16,9 +16,11 @@
 #ifndef SuplaConfigESP_h
 #define SuplaConfigESP_h
 
+#include "GUIGenericCommonDefined.h"
 #include "GUI-Generic_Config.h"
 
 #include "Arduino.h"
+#include <stdint.h>
 #include "EEPROM.h"
 #include <supla/action_handler.h>
 #include <supla/element.h>
@@ -36,7 +38,7 @@
 #endif
 
 #elif ARDUINO_ARCH_ESP32
-
+#include <WiFi.h>
 #ifdef SUPLA_MDNS
 #include <ESPmDNS.h>
 #endif
@@ -61,7 +63,7 @@ enum _ConfigMode
 #define OFF_GPIO MAX_GPIO + 1
 #endif
 
-#define OFF_GPIO_MCP23017    17
+#define OFF_GPIO_EXPENDER    17
 #define OFF_ADDRESS_MCP23017 4
 
 #define GPIO_VIRTUAL_RELAY 99
@@ -99,9 +101,10 @@ class SuplaConfigESP : public Supla::ActionHandler, public Supla::Element {
 
   int getGpio(int nr, int function);
   int getGpio(int function) {
-    return getGpio(1, function);
+    return getGpio(0, function);
   }
 
+  uint8_t getNumberButton(uint8_t nr);
   uint8_t getKeyGpio(uint8_t gpio);
 
   bool getLevel(uint8_t gpio);
@@ -112,8 +115,9 @@ class SuplaConfigESP : public Supla::ActionHandler, public Supla::Element {
   uint8_t getAction(uint8_t gpio);
   uint8_t getEvent(uint8_t gpio);
 
-  bool checkBusyCfg(int gpio);
+  bool checkBusyCfg(int gpio, int function);
   int checkBusyGpio(int gpio, int function);
+  bool checkBusyGpio(int gpio);
   uint8_t countFreeGpio(uint8_t exception = 0);
   bool checkGpio(int gpio);
 
@@ -127,7 +131,7 @@ class SuplaConfigESP : public Supla::ActionHandler, public Supla::Element {
 
   void setGpio(uint8_t gpio, uint8_t nr, uint8_t function);
   void setGpio(uint8_t gpio, uint8_t function) {
-    setGpio(gpio, 1, function);
+    setGpio(gpio, 0, function);
   }
 
   void clearGpio(uint8_t gpio, uint8_t function = 0);
@@ -135,7 +139,7 @@ class SuplaConfigESP : public Supla::ActionHandler, public Supla::Element {
   void factoryReset(bool forceReset = false);
   const String getConfigNameAP();
 
-#ifdef SUPLA_MCP23017
+#ifdef GUI_SENSOR_I2C_EXPENDER
   bool checkBusyGpioMCP23017(uint8_t gpio, uint8_t nr, uint8_t function);
   uint8_t getGpioMCP23017(uint8_t nr, uint8_t function);
   uint8_t getAdressMCP23017(uint8_t nr, uint8_t function);
@@ -147,13 +151,14 @@ class SuplaConfigESP : public Supla::ActionHandler, public Supla::Element {
   uint8_t getFunctionMCP23017(uint8_t adress);
   uint8_t getNrMCP23017(uint8_t adress);
 #endif
-  void configModeInit();
+
+  void configModeInit(WiFiMode_t m);
+  void clearEEPROM();
 
  private:
   bool MDNSConfigured = false;
   bool APConfigured = false;
   void iterateAlways();
-  void clearEEPROM();
 
   Ticker led;
 };

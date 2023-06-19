@@ -63,6 +63,8 @@ void addTextBox(String& html,
                 bool required,
                 bool readonly = false);
 
+void addTextBox(String& html, const String& value);
+
 void addTextBoxPassword(String& html, const String& input_id, const String& name, uint8_t value_key, int minlength, int maxlength, bool required);
 
 void addCheckBox(String& html, const String& input_id, const String& name, bool checked);
@@ -73,21 +75,36 @@ void addNumberBox(String& html, const String& input_id, const String& name, cons
 
 void addLinkBox(String& html, const String& name, const String& url);
 
+void addListGPIOLinkBox(String& html, const String& input_id, const String& name, const String& url, uint8_t function, uint8_t nr);
+
+void addListGPIOLinkBox(String& html, const String& input_id, const String& name, const String& url, uint8_t function);
+
+void addListGPIOBox(String& html, const String& input_id, const String& name, uint8_t function);
+
 void addListGPIOBox(String& html,
                     const String& input_id,
                     const String& name,
                     uint8_t function,
-                    uint8_t nr = 0,
+                    uint8_t nr,
                     bool underline = true,
                     const String& url = "",
                     bool no_number = false);
 
-void addListGPIOLinkBox(String& html, const String& input_id, const String& name, const String& url, uint8_t function, uint8_t nr = 0);
+void addListNumbersBox(String& html, const String& input_id, const String& name, uint8_t size, uint8_t selected);
 
 void addGPIOOptionValue(String& html, uint8_t gpio, uint8_t selectedGpio, const String& name);
 
-#ifdef SUPLA_MCP23017
-void addListMCP23017GPIOBox(String& html, const String& input_id, const String& name, uint8_t function, uint8_t nr = 0, const String& url = "");
+#ifdef GUI_SENSOR_I2C_EXPENDER
+void addListExpanderBox(String& html, const String& input_id, const String& name, uint8_t function, uint8_t nr, const String& url);
+void addListExpanderGPIOBox(String& html, const String& input_id, const String& name, uint8_t function, uint8_t nr = 0, const String& url = "");
+void addListExpanderGPIO(String& html,
+                         const String& input_id,
+                         const String& name,
+                         uint8_t function,
+                         uint8_t nr,
+                         const char* const* array_P,
+                         uint8_t size,
+                         const String& url);
 #endif
 
 void addListBox(String& html, const String& input_id, const String& name, const char* const* list_P, uint8_t size, uint8_t selected, uint8_t nr = 0);

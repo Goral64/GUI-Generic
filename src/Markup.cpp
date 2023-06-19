@@ -75,9 +75,9 @@ void addTextBox(String& html,
   }
 
   html += F("' value='");
-  // if (value != placeholder) {
-  html += value;
-  // }
+  if (value != placeholder) {
+    html += value;
+  }
 
   if (placeholder != "") {
     html += F("' placeholder='");
@@ -131,6 +131,12 @@ void addTextBox(
   return addTextBox(html, input_id, name, value, "", minlength, maxlength, required, readonly, false);
 }
 
+void addTextBox(String& html, const String& value) {
+  html += F("<style><input[name='board']{padding-left: 48px;width: calc(100% - 52px);}</style>");
+  html += F("<p style='color:#000;'>");
+  html += value;
+  html += F("</p>");
+}
 void addTextBoxPassword(String& html, const String& input_id, const String& name, uint8_t value_key, int minlength, int maxlength, bool required) {
   return addTextBox(html, input_id, name, value_key, "", minlength, maxlength, required, false, true);
 }
@@ -141,7 +147,7 @@ void addCheckBox(String& html, const String& input_id, const String& name, bool 
   html += F("</label><input type='checkbox' name='");
   html += input_id;
   html += F("'");
-if (checked) {
+  if (checked) {
     html += F(" checked");
   }
   html += F("></i>");
@@ -172,13 +178,13 @@ void addNumberBox(String& html, const String& input_id, const String& name, cons
   html += F("</label><input name='");
   html += input_id;
   html += F("' type='number'");
-  if (placeholder != "") {
+  if (!placeholder.isEmpty()) {
     html += F(" placeholder='");
-    html += placeholder;
+    html += placeholder.c_str();
     html += F("'");
   }
   html += F(" step='0.01' value='");
-  html += value;
+  html += value.c_str();
   html += F("'");
 
   if (required) {
@@ -204,14 +210,23 @@ void addLinkBox(String& html, const String& name, const String& url) {
   WebServer->sendHeader();
 }
 
+void addListGPIOLinkBox(String& html, const String& input_id, const String& name, const String& url, uint8_t function) {
+  addListGPIOBox(html, input_id, name, function, 0, true, url, true);
+}
+
+void addListGPIOLinkBox(String& html, const String& input_id, const String& name, const String& url, uint8_t function, uint8_t nr) {
+  addListGPIOBox(html, input_id, name, function, nr, true, url);
+}
+
+void addListGPIOBox(String& html, const String& input_id, const String& name, uint8_t function) {
+  addListGPIOBox(html, input_id, name, function, 0, true, "", true);
+}
+
 void addListGPIOBox(
     String& html, const String& input_id, const String& name, uint8_t function, uint8_t nr, bool underline, const String& url, bool no_number) {
   uint8_t gpio;
 
-  if (nr == 0)
-    gpio = ConfigESP->getGpio(1, function);
-  else
-    gpio = ConfigESP->getGpio(nr, function);
+  gpio = ConfigESP->getGpio(nr, function);
 
   if (underline) {
     html += F("<i>");
@@ -225,13 +240,13 @@ void addListGPIOBox(
     html += F("<a href='");
     html += PATH_START;
     html += url;
-    if (nr > 0) {
+    if (!no_number) {
       html += nr;
     }
     html += F("'>");
 
-    if (nr > 0 && !no_number) {
-      html += nr;
+    if (!no_number) {
+      html += nr + 1;
       html += F(".");
     }
 
@@ -242,8 +257,8 @@ void addListGPIOBox(
     WebServer->sendHeader();
   }
   else {
-    if (nr > 0 && !no_number) {
-      html += nr;
+    if (!no_number) {
+      html += nr + 1;
       html += F(".");
     }
 
@@ -255,13 +270,11 @@ void addListGPIOBox(
 
   html += F("<select name='");
   html += input_id;
-  if (nr != 0) {
-    html += nr;
-  }
+  html += nr;
   html += F("'>");
 
-  if (function == FUNCTION_RELAY)
-    addGPIOOptionValue(html, GPIO_VIRTUAL_RELAY, gpio, S_SPACE "VIRTUAL");
+  if (function == FUNCTION_RELAY && nr < MAX_VIRTUAL_RELAY)
+    addGPIOOptionValue(html, GPIO_VIRTUAL_RELAY, gpio, String(S_SPACE) + "VIRTUAL");
 
 #ifdef ARDUINO_ARCH_ESP8266
   for (uint8_t suported = 0; suported <= OFF_GPIO; suported++)
@@ -275,7 +288,6 @@ void addListGPIOBox(
       addGPIOOptionValue(html, suported, gpio, FPSTR(GPIO_P[suported]));
 
 #endif
-
   WebServer->sendHeader();
   html += F("</select>");
 
@@ -299,82 +311,98 @@ void addGPIOOptionValue(String& html, uint8_t gpio, uint8_t selectedGpio, const 
   html += name;
 }
 
-void addListGPIOLinkBox(String& html, const String& input_id, const String& name, const String& url, uint8_t function, uint8_t nr) {
-  addListGPIOBox(html, input_id, name, function, nr, true, url);
-}
+#ifdef GUI_SENSOR_I2C_EXPENDER
 
-#ifdef SUPLA_MCP23017
-void addListMCP23017GPIOBox(String& html, const String& input_id, const String& name, uint8_t function, uint8_t nr, const String& url) {
-  uint8_t address;
+void addListExpanderBox(String& html, const String& input_id, const String& name, uint8_t function, uint8_t nr, const String& url) {
+  uint8_t type = ConfigManager->get(KEY_ACTIVE_EXPENDER)->getElement(function).toInt();
 
-  if (nr == 1) {
-    address = ConfigESP->getAdressMCP23017(nr, function);
-    if (url != "")
-      addListLinkBox(html, String(INPUT_ADRESS_MCP23017) + nr, F("MCP23017 Adres 1"), MCP23017_P, 5, address, url);
-    else
-      addListBox(html, String(INPUT_ADRESS_MCP23017) + nr, F("MCP23017 Adres 1"), MCP23017_P, 5, address);
-  }
-  if (nr == 17) {
-    address = ConfigESP->getAdressMCP23017(nr, function);
-    if (url != "")
-      addListLinkBox(html, String(INPUT_ADRESS_MCP23017) + nr, F("MCP23017 Adres 2"), MCP23017_P, 5, address, url);
-    else
-      addListBox(html, String(INPUT_ADRESS_MCP23017) + nr, F("MCP23017 Adres 2"), MCP23017_P, 5, address);
+  if (nr == 0) {
+    addListBox(html, INPUT_EXPENDER_TYPE, S_TYPE, EXPENDER_LIST_P, 4, type);
   }
 
-  html += F("<i><label>");
-
-  if (!url.isEmpty()) {
-    html += F("<a href='");
-    html += getParameterRequest(url, ARG_PARM_NUMBER);
-    if (nr > 0) {
-      html += nr;
-    }
-    html += F("'>");
-
-    if (nr > 0) {
-      html += nr;
-      html += F(".");
-    }
-
-    html += F(" ");
-    html += name;
-    // html += FPSTR(ICON_EDIT);
-    html += F("</a>");
-    WebServer->sendHeader();
+  if (ConfigESP->checkActiveMCP23017(function)) {
+    addListExpanderGPIOBox(webContentBuffer, input_id, name, function, nr, url);
   }
   else {
-    if (nr > 0) {
-      html += nr;
-      html += F(".");
-    }
-    html += F(" ");
-    html += name;
+    addListGPIOLinkBox(webContentBuffer, input_id, name, getParameterRequest(url, ARG_PARM_NUMBER), function, nr);
   }
-  html += F("</label>");
+}
 
-  html += F("<select name='");
+void addListExpanderGPIOBox(String& html, const String& input_id, const String& name, uint8_t function, uint8_t nr, const String& url) {
+  uint8_t address, type, maxNr;
+  const char* const* listAdressExpender;
+  const char* const* listExpender;
+
+  type = ConfigManager->get(KEY_ACTIVE_EXPENDER)->getElement(function).toInt();
+
+  if (type == EXPENDER_PCF8574) {
+    maxNr = 8;
+    listAdressExpender = EXPENDER_PCF8574_P;
+    listExpender = GPIO_PCF_8574_P;
+  }
+  else {
+    maxNr = 16;
+    listAdressExpender = EXPENDER_P;
+    listExpender = GPIO_MCP23017_P;
+  }
+
+  if (nr == 0 || nr == maxNr) {
+    for (uint8_t gpio = nr; gpio <= OFF_GPIO_EXPENDER; gpio++) {
+      address = ConfigESP->getAdressMCP23017(gpio, function);
+      if (address != OFF_ADDRESS_MCP23017) {
+        break;
+      }
+    }
+
+    if (url != "")
+      addListLinkBox(html, String(INPUT_ADRESS_MCP23017) + nr, String(S_ADDRESS) + S_SPACE + 1, listAdressExpender, 5, address, url);
+    else
+      addListBox(html, String(INPUT_ADRESS_MCP23017) + nr, String(S_ADDRESS) + S_SPACE + 1, listAdressExpender, 5, address);
+  }
+
+  addListExpanderGPIO(webContentBuffer, input_id, name, function, nr, listExpender, 18, getParameterRequest(url, ARG_PARM_NUMBER) + nr);
+}
+
+void addListExpanderGPIO(String& html,
+                         const String& input_id,
+                         const String& name,
+                         uint8_t function,
+                         uint8_t nr,
+                         const char* const* array_P,
+                         uint8_t size,
+                         const String& url) {
+  html += F("<i><label><a href='");
+  html += PATH_START;
+  html += url;
+  html += F("'>");
+  html += nr + 1;
+  html += F(". ");
+  html += name;
+  html += F("</a>");
+  html += "</label><select name='";
   html += input_id;
+  html += "mcp";
   html += nr;
   html += F("'>");
 
   uint8_t selected = ConfigESP->getGpioMCP23017(nr, function);
 
-  for (uint8_t suported = 0; suported < 18; suported++) {
-    if (ConfigESP->checkBusyGpioMCP23017(suported, nr, function) || selected == suported) {
-      html += F("<option value='");
-      html += suported;
-      html += F("'");
-      if (selected == suported) {
-        html += F(" selected");
+  for (uint8_t suported = 0; suported < size; suported++) {
+    if (!String(FPSTR(array_P[suported])).isEmpty()) {
+      if (ConfigESP->checkBusyGpioMCP23017(suported, nr, function) || selected == suported) {
+        html += F("<option value='");
+        html += suported;
+        html += F("'");
+        if (selected == suported) {
+          html += F(" selected");
+        }
+        html += F(">");
+        html += FPSTR(array_P[suported]);
       }
-      html += F(">");
-      html += FPSTR(GPIO_MCP23017_P[suported]);
     }
-    WebServer->sendHeader();
   }
-  html += F("</select>");
-  html += F("</i>");
+  WebServer->sendHeader();
+  html += F("</select></i>");
 }
 #endif
 
@@ -393,7 +421,7 @@ void addListBox(String& html, const String& input_id, const String& name, const 
   html += F("'>");
 
   for (uint8_t suported = 0; suported < size; suported++) {
-    if (String(FPSTR(array_P[suported])) != "") {
+    if (!String(FPSTR(array_P[suported])).isEmpty()) {
       html += F("<option value='");
       html += suported;
       html += F("'");
@@ -402,9 +430,30 @@ void addListBox(String& html, const String& input_id, const String& name, const 
       }
       html += F(">");
       html += FPSTR(array_P[suported]);
-      WebServer->sendHeader();
     }
   }
+  WebServer->sendHeader();
+  html += F("</select></i>");
+}
+
+void addListNumbersBox(String& html, const String& input_id, const String& name, uint8_t size, uint8_t selected) {
+  html += F("<i><label>");
+  html += name;
+  html += "</label><select name='";
+  html += input_id;
+  html += F("'>");
+
+  for (uint8_t suported = 0; suported < size; suported++) {
+    html += F("<option value='");
+    html += suported;
+    html += F("'");
+    if (selected == suported) {
+      html += F(" selected");
+    }
+    html += F(">");
+    html += (suported + 1);
+  }
+  WebServer->sendHeader();
   html += F("</select></i>");
 }
 
@@ -435,14 +484,16 @@ void addListLinkBox(String& html,
   html += F("'>");
 
   for (uint8_t suported = 0; suported < size; suported++) {
-    html += F("<option value='");
-    html += suported;
-    html += F("'");
-    if (selected == suported) {
-      html += F(" selected");
+    if (!String(FPSTR(array_P[suported])).isEmpty()) {
+      html += F("<option value='");
+      html += suported;
+      html += F("'");
+      if (selected == suported) {
+        html += F(" selected");
+      }
+      html += F(">");
+      html += FPSTR(array_P[suported]);
     }
-    html += F(">");
-    html += FPSTR(array_P[suported]);
   }
   WebServer->sendHeader();
   html += F("</select></i>");
@@ -484,16 +535,13 @@ String getParameterRequest(const String& url, const String& param, const String&
 
 const String SuplaJavaScript(const String& java_return) {
   String java_script =
-      F("<script type='text/javascript'>setTimeout(function(){var "
-        "element=document.getElementById('msg');if( element != "
-        "null){element.style.visibility='hidden';location.href='");
+      F("<script type='text/javascript'>setTimeout(function(){var element=document.getElementById('msg');if(element != "
+        "null){element.style.visibility='hidden';if(window.location.pathname != '/");
   java_script += java_return;
-  java_script += F("';}},1600);</script>\n");
-#ifdef SUPLA_OTA
-  java_script +=
-      F("<script type='text/javascript'>if(window.top.location != window.location){"
-        "window.top.location.href = window.location.href;}</script>\n");
-#endif
+  java_script += F("'){location.href='");
+  java_script += java_return;
+  java_script += F("'};}},1600);");
+  java_script += F("if(window.top.location != window.location){window.top.location.href = window.location.href;}</script>\n");
   return java_script;
 }
 

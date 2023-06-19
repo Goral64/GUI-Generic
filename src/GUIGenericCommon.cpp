@@ -27,8 +27,8 @@ uint8_t *HexToBytes(String _value) {
   return buffer;
 }
 
-int getCountSensorChannels() {
-  int maxFrame = 0;
+uint8_t getCountSensorChannels() {
+  uint8_t maxFrame = 0;
   for (auto element = Supla::Element::begin(); element != nullptr; element = element->next()) {
     if (element->getChannel()) {
       auto channel = element->getChannel();
@@ -47,6 +47,10 @@ int getCountSensorChannels() {
 
       if (channel->getChannelType() == SUPLA_CHANNELTYPE_DISTANCESENSOR) {
         maxFrame += 1;
+      }
+
+      if (channel->getChannelType() == SUPLA_CHANNELTYPE_ELECTRICITY_METER) {
+        maxFrame += 3;
       }
     }
 

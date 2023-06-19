@@ -24,60 +24,58 @@
 
 const char HTTP_META[] PROGMEM =
     "<!DOCTYPE HTML><html><head><meta http-equiv='content-type' content='text/html; charset=UTF-8'>"
-	"<meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no'>\n";
+    "<meta name='viewport' content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no'>\n";
 const char HTTP_STYLE[] PROGMEM =
-	    "<style>body{font-size:14px;font-family:HelveticaNeue,'Helvetica Neue',HelveticaNeueRoman,HelveticaNeue-Roman,'Helvetica Neue "
-	    "Roman',TeXGyreHerosRegular,Helvetica,Tahoma,Geneva,Arial,sans-serif;font-weight:400;font-stretch:normal;background:#00d151;color:#fff;line-"
-	    "height:20px;padding:0}.s{width:460px;margin:0 auto;margin-top:calc(50vh - 340px);border:solid 3px #fff;padding:0 10px "
-	    "10px;border-radius:3px}#l{display:block;max-width:150px;height:155px;margin:-80px auto 20px;background:#00d151;padding-right:5px}#l "
-	    "path{fill:#000}.w{margin:3px 0 16px;padding:5px 0;border-radius:3px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)}h1,h3{margin:10px "
-	    "8px;font-family:HelveticaNeueLight,HelveticaNeue-Light,'Helvetica Neue Light',HelveticaNeue,'Helvetica "
-	    "Neue',TeXGyreHerosRegular,Helvetica,Tahoma,Geneva,Arial,sans-serif;font-weight:300;font-stretch:normal;color:#000;font-size:23px}h1{margin-"
-	    "bottom:14px;color:#fff}span{display:block;margin:10px 7px 14px}i{display:block;font-style:normal;position:relative;border-bottom:solid 1px "
-	    "#00d151;height:42px}i:last-child{border:none}label{position:absolute;display:inline-block;top:0;left:8px;color:#00d151;line-height:41px;}i "
-	    "input,"
-	    "select{width:calc(100% - "
-	    "166px);border:none;font-size:16px;line-height:40px;border-radius:0;letter-spacing:-.5px;background:#fff;color:#000;padding-left:165px;-webkit-"
-	    "appearance:none;-moz-appearance:none;appearance:none;outline:0!important;height:40px}select{padding:0;float:right;margin:1px 3px 1px "
-	    "2px}button{width:100%;border:0;background:#000;padding:5px 10px;font-size:16px;line-height:40px;color:#fff;border-radius:3px;box-shadow:0 1px "
-	    "3px rgba(0,0,0,.3);cursor:pointer}.c{background:#ffe836;position:fixed;width:100%;line-height:80px;color:#000;top:0;left:0;box-shadow:0 1px 3px "
-	    "rgba(0,0,0,.3);text-align:center;font-size:26px;z-index:100}"
-	    ".dif{position:absolute;width:160px;z-index:0}.difl{margin-left:-10px}.difr{margin-left:310px}.dift{margin-top:-94px}"
-	    ".iframe{width:160px;height:90px;border:0;display:none}"
-		"@media all and (max-height:920px){.s{margin-top:80px}}"
-		"@media all and (max-width:900px){.s{width:calc(100% - 20px);margin-top:40px;border:none;padding:0 "
-	    "8px;border-radius:0}#l{max-width:80px;height:auto;margin:10px auto "
-	    "20px}h1,h3{font-size:19px}i{border:none;height:auto}label{display:block;margin:4px 0 "
-	    "12px;color:#00d151;font-size:13px;position:relative;line-height:18px}i input,select{width:calc(100% - "
-	    "10px);font-size:16px;line-height:28px;padding:0 5px;border-bottom:solid 1px "
-	    "#00d151}select{width:100%;float:none;margin:0}}iframe{margin:auto;display:block;}.formcenter{color:#000;width:50%;margin: 25px auto 25px "
-	    "auto;} input[type='checkbox' i]{appearance:auto;margin-top:10px;height:20px;width:calc(100% - 116px);}"
-		"@media (max-width: 900px){input[type='checkbox' i]{width:auto;}.difr{margin-left:calc(100% - 190px);}}</style>";
+    "<style>body{font-size:14px;font-family:HelveticaNeue,'Helvetica Neue',HelveticaNeueRoman,HelveticaNeue-Roman,'Helvetica Neue "
+    "Roman',TeXGyreHerosRegular,Helvetica,Tahoma,Geneva,Arial,sans-serif;font-weight:400;font-stretch:normal;background:#00d151;color:#fff;line-"
+    "height:20px;padding:0}.s{width:460px;margin:0 auto;margin-top:calc(50vh - 340px);border:solid 3px #fff;padding:0 10px "
+    "10px;border-radius:3px}#l{display:block;max-width:150px;height:155px;margin:-80px auto 20px;background:#00d151;padding-right:5px}#l "
+    "path{fill:#000}.w{margin:3px 0 16px;padding:5px 0;border-radius:3px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3)}h1,h3{margin:10px "
+    "8px;font-family:HelveticaNeueLight,HelveticaNeue-Light,'Helvetica Neue Light',HelveticaNeue,'Helvetica "
+    "Neue',TeXGyreHerosRegular,Helvetica,Tahoma,Geneva,Arial,sans-serif;font-weight:300;font-stretch:normal;color:#000;font-size:23px}h1{margin-"
+    "bottom:14px;color:#fff}span{display:block;margin:10px 7px 14px}i{display:block;font-style:normal;position:relative;border-bottom:solid 1px "
+    "#00d151;height:42px}i:last-child{border:none}label{position:absolute;display:inline-block;top:0;left:8px;color:#00d151;line-height:41px;}i "
+    "input,"
+    "select{width:calc(100% - "
+    "180px);border:none;font-size:16px;line-height:40px;border-radius:0;letter-spacing:-.5px;background:#fff;color:#000;padding-left:178px;-webkit-"
+    "appearance:none;-moz-appearance:none;appearance:none;outline:0!important;height:40px}select{padding:0;float:right;margin:1px 3px 1px "
+    "2px}button{width:100%;border:0;background:#000;padding:5px 10px;font-size:16px;line-height:40px;color:#fff;border-radius:3px;box-shadow:0 1px "
+    "3px rgba(0,0,0,.3);cursor:pointer}.c{background:#ffe836;position:fixed;width:100%;line-height:80px;color:#000;top:0;left:0;box-shadow:0 1px 3px "
+    "rgba(0,0,0,.3);text-align:center;font-size:26px;z-index:100}"
+    ".dif{position:absolute;width:160px;z-index:0}.difl{margin-left:-10px}.difr{margin-left:310px}.dift{margin-top:-94px}"
+    ".iframe{width:160px;height:90px;border:0;display:none}"
+    "@media all and (max-height:920px){.s{margin-top:80px}}"
+    "@media all and (max-width:900px){.s{width:calc(100% - 20px);margin-top:40px;border:none;padding:0 "
+    "8px;border-radius:0}#l{max-width:80px;height:auto;margin:10px auto "
+    "20px}h1,h3{font-size:19px}i{border:none;height:auto}label{display:block;margin:4px 0 "
+    "12px;color:#00d151;font-size:13px;position:relative;line-height:18px}i input,select{width:calc(100% - "
+    "10px);font-size:16px;line-height:28px;padding:0 5px;border-bottom:solid 1px "
+    "#00d151}select{width:100%;float:none;margin:0}}iframe{margin:auto;display:block;}.formcenter{color:#000;width:50%;margin: 25px auto 25px "
+    "auto;} input[type='checkbox' i]{appearance:auto;margin:15px;width:calc(100% - 116px);transform:scale(2);height:auto;}"
+    "@media (max-width: 900px){input[type='checkbox' i]{width:auto;}.difr{margin-left:calc(100% - 190px);}}</style>";
 const char HTTP_SCRIPT[] PROGMEM =
-	"<script>"
-	"function ifl(i){"
-	"let r=new XMLHttpRequest;"
-	"r.open('GET',i.src,true);"
-	"r.onprogress=function(ev){"
-	"let s=ev.target.status;"
-	"let sfn=(s).toString()[0];"
-	"switch(sfn) {"
-	"case '2':"
-	"r.abort();"
-	"i.style.display='block';"
-	"break;"
-	"default:"
-	"r.abort();"
-	"i.style.display='none';"
-	"};"
-	"};"
-	"r.send('');"
-	"};"
-	"</script>\n";
-const char HTTP_DIV_START[] PROGMEM =
-    "</head><body><div class='s'>";
-const char HTTP_DIV_END[] PROGMEM =
-    "</div></body></html>";
+    "<script>"
+    "function ifl(i){"
+    "let r=new XMLHttpRequest;"
+    "r.open('GET',i.src,true);"
+    "r.onprogress=function(ev){"
+    "let s=ev.target.status;"
+    "let sfn=(s).toString()[0];"
+    "switch(sfn) {"
+    "case '2':"
+    "r.abort();"
+    "i.style.display='block';"
+    "break;"
+    "default:"
+    "r.abort();"
+    "i.style.display='none';"
+    "};"
+    "};"
+    "r.send('');"
+    "};"
+    "</script>\n";
+const char HTTP_DIV_START[] PROGMEM = "</head><body><div class='s'>";
+const char HTTP_DIV_END[] PROGMEM = "</div></body></html>";
 const char HTTP_LOGO[] PROGMEM =
     "<a href='/'><svg version='1.1' id='l' x='0' y='0' viewBox='0 0 200 200' xml:space='preserve'><path "
     "d='M59.3,2.5c18.1,0.6,31.8,8,40.2,23.5c3.1,5.7,4.3,11.9,4.1,18.3c-0.1,3.6-0.7,7.1-1.9,10.6c-0.2,0.7-0.1,1.1,0.6,1.5c12.8,7.7,25.5,15.4,38.3,"
@@ -96,7 +94,7 @@ const char HTTP_LOGO[] PROGMEM =
     "M167.7,88.5c-1,0-2.1,0.1-3.1,0.3c-9,1.7-14.2,10.6-10.8,18.6c2.9,6.8,11.4,10.3,19,7.8c7.1-2.3,11.1-9.1,9.6-15.9C180.9,93,174.8,88.5,167.7,88.5z'/"
     "></svg></a>";
 const char HTTP_SUMMARY[] PROGMEM =
-    "<h1>{h}</h1><span>LAST STATE: {s}<br>Firmware: SuplaDevice {v}<br>GUID: {g}<br>MAC: {m}<br>Free Mem: {f}KB</span>\n";
+    "<h1>{h}</h1><span>LAST STATE: {s}<br>Firmware: SuplaDevice {v}<br>GUID: {g}<br>MAC: {m}<br>Free Mem: {f}KB<br>Mode: {c}</span>\n";
 const char HTTP_IFRAMES[] PROGMEM =
     "<div class='dif difl dift'><iframe class='iframe' src='https://gui-generic-builder.supla.io/f.php?tl' onload='ifl(this)'></iframe></div>"
     "<div class='dif difr dift'><iframe class='iframe' src='https://gui-generic-builder.supla.io/f.php?tr' onload='ifl(this)'></iframe></div>"
@@ -112,8 +110,6 @@ const char HTTP_FAVICON[] PROGMEM =
     "q3Chk4dgCleJYpAEOmfCkDB+sbsK1886YBRfgWMTBwbi896wR04YZuAyAH6OmzDCbr3RgYsj6A1HEBPXCfgWHONgaG6eUBII0LFTiA7jn+iIF/"
     "MbMTyEu3lphtAJtpvl4BTLPNWgVSySA+y28aWIDdyGtVBgNH5psshVawwHGGO+arLr7MYFoJjZr/"
     "zBPYj85a1sC4ulwAIsIdcJzh2qt1WReYBWBR48gxgd1ziQIi6hTYEsxR45pZwRU9+oWgNAB1F3c/H6bYqgAAAABJRU5ErkJggg==' type='image/x-png' />\n";
-
-const char HTTP_RBT[] PROGMEM = "<a href='/?reboot=1'><button>Restart</button></a>";
 
 const char ICON_EDIT[] PROGMEM =
     "<img "
@@ -178,6 +174,12 @@ const char GPIO2[] PROGMEM = "2-IO";
 const char GPIO3[] PROGMEM = "3-RX";
 const char GPIO4[] PROGMEM = "4-IO";
 const char GPIO5[] PROGMEM = "5-IO";
+const char GPIO6[] PROGMEM = "6-IO";
+const char GPIO7[] PROGMEM = "7-IO";
+const char GPIO8[] PROGMEM = "8-IO";
+const char GPIO9[] PROGMEM = "9-IO";
+const char GPIO10[] PROGMEM = "10-IO";
+const char GPIO11[] PROGMEM = "11-IO";
 const char GPIO12[] PROGMEM = "12-IO";
 const char GPIO13[] PROGMEM = "13-IO";
 const char GPIO14[] PROGMEM = "14-IO";
@@ -186,9 +188,11 @@ const char GPIO16[] PROGMEM = "16-IO";
 const char GPIO17[] PROGMEM = "17-IO";
 const char GPIO18[] PROGMEM = "18-IO";
 const char GPIO19[] PROGMEM = "19-IO";
+const char GPIO20[] PROGMEM = "20-IO";
 const char GPIO21[] PROGMEM = "21-IO";
 const char GPIO22[] PROGMEM = "22-IO";
 const char GPIO23[] PROGMEM = "23-IO";
+const char GPIO24[] PROGMEM = "24-IO";
 const char GPIO25[] PROGMEM = "25-IO";
 const char GPIO26[] PROGMEM = "26-IO";
 const char GPIO27[] PROGMEM = "27-IO";
@@ -197,15 +201,17 @@ const char GPIO33[] PROGMEM = "33-AO";
 const char GPIO34[] PROGMEM = "34-IA";
 const char GPIO35[] PROGMEM = "35-IA";
 const char GPIO36[] PROGMEM = "36-IA";
+const char GPIO37[] PROGMEM = "37-IA";
+const char GPIO38[] PROGMEM = "38-IA";
 const char GPIO39[] PROGMEM = "39-IA";
 
-const char* const GPIO_P[] PROGMEM = {GPIO0,   GPIO1,  GPIO2,   GPIO3,  GPIO4,   GPIO5,   S_EMPTY, S_EMPTY, S_EMPTY, S_EMPTY, S_EMPTY,
-                                      S_EMPTY, GPIO12, GPIO13,  GPIO14, GPIO15,  GPIO16,  GPIO17,  GPIO18,  GPIO19,  S_EMPTY, GPIO21,
-                                      GPIO22,  GPIO23, S_EMPTY, GPIO25, GPIO26,  GPIO27,  S_EMPTY, S_EMPTY, S_EMPTY, S_EMPTY, GPIO32,
-                                      GPIO33,  GPIO34, GPIO35,  GPIO36, S_EMPTY, S_EMPTY, GPIO39,  OFF};
+const char* const GPIO_P[] PROGMEM = {GPIO0,  GPIO1,  GPIO2,  GPIO3,  GPIO4,  GPIO5,  GPIO6,   GPIO7,   GPIO8,   GPIO9,   GPIO10,
+                                      GPIO11, GPIO12, GPIO13, GPIO14, GPIO15, GPIO16, GPIO17,  GPIO18,  GPIO19,  GPIO20,  GPIO21,
+                                      GPIO22, GPIO23, GPIO24, GPIO25, GPIO26, GPIO27, S_EMPTY, S_EMPTY, S_EMPTY, S_EMPTY, GPIO32,
+                                      GPIO33, GPIO34, GPIO35, GPIO36, GPIO37, GPIO38, GPIO39,  OFF};
 #endif
 
-#ifdef SUPLA_MCP23017
+#ifdef GUI_SENSOR_I2C_EXPENDER
 const char GPIO_A0[] PROGMEM = "A0";
 const char GPIO_A1[] PROGMEM = "A1";
 const char GPIO_A2[] PROGMEM = "A2";
@@ -225,6 +231,37 @@ const char GPIO_B7[] PROGMEM = "B7";
 
 const char* const GPIO_MCP23017_P[] PROGMEM = {GPIO_A0, GPIO_A1, GPIO_A2, GPIO_A3, GPIO_A4, GPIO_A5, GPIO_A6, GPIO_A7, GPIO_B0,
                                                GPIO_B1, GPIO_B2, GPIO_B3, GPIO_B4, GPIO_B5, GPIO_B6, GPIO_B7, S_EMPTY, OFF};
+
+const char* const GPIO_PCF_8574_P[] PROGMEM = {GPIO_A0, GPIO_A1, GPIO_A2, GPIO_A3, GPIO_A4, GPIO_A5, GPIO_A6, GPIO_A7, S_EMPTY,
+                                               S_EMPTY, S_EMPTY, S_EMPTY, S_EMPTY, S_EMPTY, S_EMPTY, S_EMPTY, S_EMPTY, OFF};
+
+const char* const EXPENDER_LIST_P[] PROGMEM = {
+    OFF,
+#ifdef SUPLA_MCP23017
+    "MCP23017",
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_PCF8575
+    "PCF8575",
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_PCF8574
+    "PCF8574/A",
+#else
+    S_EMPTY,
+#endif
+};
+
+enum
+{
+  EXPENDER_OFF,
+  EXPENDER_MCP23017,
+  EXPENDER_PCF8575,
+  EXPENDER_PCF8574
+};
+
 #endif
 
 #if defined(SUPLA_BME280) || defined(SUPLA_BMP280)
@@ -241,12 +278,24 @@ const char ADR44_ADR45[] PROGMEM = "0x44 & 0x45";
 const char* const SHT3x_P[] PROGMEM = {OFF, ADR44, ADR45, ADR44_ADR45};
 #endif
 
-#ifdef SUPLA_MCP23017
+#if defined(GUI_SENSOR_I2C_EXPENDER) || defined(SUPLA_LCD_HD44780)
 const char ADR20[] PROGMEM = "0x20";
 const char ADR21[] PROGMEM = "0x21";
 const char ADR22[] PROGMEM = "0x22";
 const char ADR23[] PROGMEM = "0x23";
-const char* const MCP23017_P[] PROGMEM = {ADR20, ADR21, ADR22, ADR23, OFF};
+const char ADR24[] PROGMEM = "0x24";
+const char ADR25[] PROGMEM = "0x25";
+const char ADR26[] PROGMEM = "0x26";
+#endif
+
+#ifdef SUPLA_LCD_HD44780
+const char* const HD44780_P[] PROGMEM = {OFF, ADR20, ADR21, ADR22, ADR23, ADR24, ADR25, ADR26, "0x27", "0x38", "0x3F"};
+const char* const HD44780_TYPE_P[] PROGMEM = {"2x16", "2x20", "4x16", "4x20"};
+#endif
+
+#ifdef GUI_SENSOR_I2C_EXPENDER
+const char* const EXPENDER_P[] PROGMEM = {ADR20, ADR21, ADR22, ADR23, OFF};
+const char* const EXPENDER_PCF8574_P[] PROGMEM = {"0x20 | 0x38", "0x21 | 0x39", "0x22 | 0x3A", "0x24 | 0x3B", OFF};
 #endif
 
 const char* const STATE_P[] PROGMEM = {OFF, ON};
@@ -261,7 +310,8 @@ const char* const MEMORY_P[] PROGMEM = {OFF, ON, POSITION_MEMORY};
 const char REACTION_ON_PRESS[] PROGMEM = S_REACTION_ON_PRESS;
 const char REACTION_ON_RELEASE[] PROGMEM = S_REACTION_ON_RELEASE;
 const char REACTION_ON_CHANGE[] PROGMEM = S_REACTION_ON_CHANGE;
-const char* const TRIGGER_P[] PROGMEM = {REACTION_ON_PRESS, REACTION_ON_RELEASE, REACTION_ON_CHANGE};
+const char REACTION_ON_HOLD[] PROGMEM = S_REACTION_ON_HOLD;
+const char* const TRIGGER_P[] PROGMEM = {REACTION_ON_PRESS, REACTION_ON_RELEASE, REACTION_ON_CHANGE, REACTION_ON_HOLD};
 
 const char ACTION_TOGGLE[] PROGMEM = S_TOGGLE;
 
@@ -279,8 +329,8 @@ enum RFBridgeType
 
 }
 }  // namespace Supla
-const char TRANSMITTER[] PROGMEM = "Nadajnik";
-const char RECEIVER[] PROGMEM = "Odbiornik";
+const char TRANSMITTER[] PROGMEM = S_TRANSMITTER;
+const char RECEIVER[] PROGMEM = S_RECEIVER;
 const char* const RF_BRIDGE_TYPE_P[] PROGMEM = {TRANSMITTER, RECEIVER};
 #endif
 
@@ -316,214 +366,229 @@ const char* const OLED_CONTROLL_P[] PROGMEM = {CONTROLL_NORMAL, CONTROLL_SLOW, C
 
 enum conditioningType
 {
-  HEATING,
-  COOLING,
-  MOISTURIZING,
-  DRAINGE
+  CONDITION_HEATING,
+  CONDITION_COOLING,
+  CONDITION_MOISTURIZING,
+  CONDITION_DRAINGE,
+  CONDITION_VOLTAGE,
+  CONDITION_TOTAL_CURRENT,
+  CONDITION_TOTAL_POWER_ACTIVE,
+  CONDITION_GPIO,
+  CONDITION_VOLTAGE_OPPOSITE,
+  CONDITION_TOTAL_CURRENT_OPPOSITE,
+  CONDITION_TOTAL_POWER_ACTIVE_OPPOSITE,
+  CONDITION_COUNT
 };
-
-/*const char CONDITIONING__HEATING[] PROGMEM = "Temperatura - ogrzewanie";
-const char CONDITIONING__COOLING[] PROGMEM = "Temperatura - chłodzenie";
-const char CONDITIONING__MOISTURIZING[] PROGMEM = "Wilgotność - nawilżanie";
-const char CONDITIONING__DRAINGE[] PROGMEM = "Wilgotność - osuszanie";*/
-const char CONDITIONING__HEATING[] PROGMEM = S_ON_CH_VAL_OFF_HEATING;
-const char CONDITIONING__COOLING[] PROGMEM = S_ON_CH_VAL_OFF_COOLING;
-const char CONDITIONING__MOISTURIZING[] PROGMEM = S_ON_2CH_VAL_OFF_HUMIDIFICATION;
-const char CONDITIONING__DRAINGE[] PROGMEM = S_ON_2CH_VAL_OFF_DRYING;
-const char* const CONDITIONS_TYPE_P[] PROGMEM = {CONDITIONING__HEATING, CONDITIONING__COOLING, CONDITIONING__MOISTURIZING, CONDITIONING__DRAINGE};
 
 enum sensorList
 {
-  NO_SENSORS = 0
-#ifdef SUPLA_DS18B20
-  ,
-  SENSOR_DS18B20
-#endif
-#ifdef SUPLA_DHT11
-  ,
-  SENSOR_DHT11
-#endif
-#ifdef SUPLA_DHT22
-  ,
-  SENSOR_DHT22
-#endif
-#ifdef SUPLA_SI7021_SONOFF
-  ,
-  SENSOR_SI7021_SONOFF
-#endif
-#ifdef SUPLA_HC_SR04
-  ,
-  SENSOR_HC_SR04
-#endif
-#ifdef SUPLA_BME280
-  ,
-  SENSOR_BME280
-#endif
-#ifdef SUPLA_SHT3x
-  ,
-  SENSOR_SHT3x
-#endif
-#ifdef SUPLA_SI7021
-  ,
-  SENSOR_SI7021
-#endif
-#ifdef SUPLA_MAX6675
-  ,
-  SENSOR_MAX6675
-#endif
-#ifdef SUPLA_NTC_10K
-  ,
-  SENSOR_NTC_10K
-#endif
-#ifdef SUPLA_BMP280
-  ,
-  SENSOR_BMP280
-#endif
-#ifdef SUPLA_MPX_5XXX
-  ,
+  NO_SENSORS = 0,
+  SENSOR_DS18B20,
+  SENSOR_DHT11,
+  SENSOR_DHT22,
+  SENSOR_SI7021_SONOFF,
+  SENSOR_HC_SR04,
+  SENSOR_BME280,
+  SENSOR_SHT3x,
+  SENSOR_SI7021,
+  SENSOR_MAX6675,
+  SENSOR_NTC_10K,
+  SENSOR_BMP280,
   SENSOR_MPX_5XXX,
-  SENSOR_MPX_5XXX_PERCENT
-#endif
-
-#ifdef SUPLA_ANALOG_READING_MAP
-  ,
-  SENSOR_ANALOG_READING_MAP
-#endif
-
-#ifdef SUPLA_VL53L0X
-  ,
-  SENSOR_VL53L0X
-#endif
-
-#ifdef SUPLA_DIRECT_LINKS_SENSOR_THERMOMETR
-  ,
-  SENSOR_DIRECT_LINKS_SENSOR_THERMOMETR
-#endif
-
-#ifdef SUPLA_HDC1080
-  ,
-  SENSOR_HDC1080
-#endif
-  ,
+  SENSOR_MPX_5XXX_PERCENT,
+  SENSOR_ANALOG_READING_MAP,
+  SENSOR_VL53L0X,
+  SENSOR_DIRECT_LINKS_SENSOR_THERMOMETR,
+  SENSOR_HDC1080,
+  SENSOR_HLW8012,
+  SENSOR_PZEM_V3,
+  SENSOR_CSE7766,
+  SENSOR_BINARY,
+  SENSOR_MAX31855,
+  SENSOR_VINDRIKTNING_IKEA,
+  SENSOR_PMSX003,
+  SENSOR_ADE7953,
   COUNT_SENSOR_LIST
 };
 
-#ifdef SUPLA_DS18B20
-const char NAME_DS18B20[] PROGMEM = S_DS18B20;
-#endif
-#ifdef SUPLA_DHT11
-const char NAME_DHT11[] PROGMEM = S_DHT11;
-#endif
-#ifdef SUPLA_DHT22
-const char NAME_DHT22[] PROGMEM = S_DHT22;
-#endif
-#ifdef SUPLA_SI7021_SONOFF
-const char NAME_SI7021_SONOFF[] PROGMEM = S_SI7021_SONOFF;
-#endif
-#ifdef SUPLA_HC_SR04
-const char NAME_HC_SR04[] PROGMEM = S_HC_SR04;
-#endif
-#ifdef SUPLA_BME280
-const char NAME_BME280[] PROGMEM = S_BME280;
-#endif
-#ifdef SUPLA_SHT3x
-const char NAME_SHT3x[] PROGMEM = S_SHT3X;
-#endif
-#ifdef SUPLA_SI7021
-const char NAME_SI7021[] PROGMEM = S_SI702;
-#endif
-#ifdef SUPLA_MAX6675
-const char NAME_MAX6675[] PROGMEM = S_MAX6675;
-#endif
-#ifdef SUPLA_NTC_10K
-const char NAME_NTC_10K[] PROGMEM = S_NTC_10K;
-#endif
-#ifdef SUPLA_BMP280
-const char NAME_BMP280[] PROGMEM = S_BMP280;
-#endif
-#ifdef SUPLA_MPX_5XXX
-const char NAME_SENSOR_MPX_5XXX[] PROGMEM = S_MPX_5XXX;
-const char NAME_SENSOR_MPX_5XXX_PERCENT[] PROGMEM = S_MPX_5XXX_PERCENT;
-#endif
-#ifdef SUPLA_VL53L0X
-const char NAME_VL53L0X[] PROGMEM = "VL53L0X";
-#endif
-#ifdef SUPLA_DIRECT_LINKS_SENSOR_THERMOMETR
-const char NAME_SENSOR_DIRECT_LINKS_SENSOR_THERMOMETR[] PROGMEM = "Direct Links Temp";
-#endif
-#ifdef SUPLA_HDC1080
-const char NAME_HDC1080[] PROGMEM = "HDC1080";
+#if defined(GUI_SENSOR_SPI) || defined(GUI_SENSOR_I2C) || defined(GUI_SENSOR_1WIRE) || defined(GUI_SENSOR_OTHER) || defined(GUI_SENSOR_ANALOG)
+#define GUI_ALL_SENSOR
 #endif
 
-const char* const SENSOR_LIST_P[] PROGMEM = {OFF
-#ifdef SUPLA_DS18B20
-                                             ,
-                                             NAME_DS18B20
-#endif
-#ifdef SUPLA_DHT11
-                                             ,
-                                             NAME_DHT11
-#endif
-#ifdef SUPLA_DHT22
-                                             ,
-                                             NAME_DHT22
-#endif
-#ifdef SUPLA_SI7021_SONOFF
-                                             ,
-                                             NAME_SI7021_SONOFF
-#endif
-#ifdef SUPLA_HC_SR04
-                                             ,
-                                             NAME_HC_SR04
-#endif
-#ifdef SUPLA_BME280
-                                             ,
-                                             NAME_BME280
-#endif
-#ifdef SUPLA_SHT3x
-                                             ,
-                                             NAME_SHT3x
-#endif
-#ifdef SUPLA_SI7021
-                                             ,
-                                             NAME_SI7021
-#endif
-#ifdef SUPLA_MAX6675
-                                             ,
-                                             NAME_MAX6675
-#endif
-#ifdef SUPLA_NTC_10K
-                                             ,
-                                             NAME_NTC_10K
-#endif
-#ifdef SUPLA_BMP280
-                                             ,
-                                             NAME_BMP280
-#endif
-#ifdef SUPLA_MPX_5XXX
-                                             ,
-                                             NAME_SENSOR_MPX_5XXX,
-                                             NAME_SENSOR_MPX_5XXX_PERCENT
+#if defined(GUI_OTHER_ENERGY) || defined(GUI_SENSOR_I2C_ENERGY_METER)
+#define GUI_ALL_ENERGY
 #endif
 
-#ifdef SUPLA_ANALOG_READING_MAP
-                                             ,
-                                             "ANALOG READING"
+#ifdef SUPLA_CONDITIONS
+const char* const CONDITIONS_TYPE_P[] PROGMEM = {
+#ifdef GUI_ALL_SENSOR
+    S_ON_CH_VAL_OFF_HEATING,
+    S_ON_CH_VAL_OFF_COOLING,
+    S_ON_2CH_VAL_OFF_HUMIDIFICATION,
+    S_ON_2CH_VAL_OFF_DRYING,
+#else
+    S_EMPTY, S_EMPTY, S_EMPTY, S_EMPTY,
 #endif
 
-#ifdef SUPLA_VL53L0X
-                                             ,
-                                             NAME_VL53L0X
+#ifdef GUI_ALL_ENERGY
+    "ON > Napięcie[V] > OFF",
+    "ON > Natężenie[A] > OFF",
+    "ON > Moc czynna[W] > OFF",
+#else
+    S_EMPTY, S_EMPTY, S_EMPTY,
 #endif
-
-#ifdef SUPLA_DIRECT_LINKS_SENSOR_THERMOMETR
-                                             ,
-                                             NAME_SENSOR_DIRECT_LINKS_SENSOR_THERMOMETR
+#ifdef SUPLA_LIMIT_SWITCH
+    "Stan GPIO",
+#else
+    S_EMPTY,
 #endif
-#ifdef SUPLA_HDC1080
-                                             ,
-                                             NAME_HDC1080
+#ifdef GUI_ALL_ENERGY
+    "ON < Napięcie[V] < OFF",
+    "ON < Natężenie[A] < OFF",
+    "ON < Moc czynna[W] < OFF",
+#else
+    S_EMPTY, S_EMPTY, S_EMPTY,
 #endif
 };
+
+const char* const SENSOR_LIST_P[] PROGMEM = {
+    OFF,
+#ifdef SUPLA_DS18B20
+    S_DS18B20,
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_DHT11
+    S_DHT11,
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_DHT22
+    S_DHT22,
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_SI7021_SONOFF
+    S_SI7021_SONOFF,
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_HC_SR04
+    S_HC_SR04,
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_BME280
+    S_BME280,
+#else
+    S_EMPTY,
+#endif
+#if defined(SUPLA_SHT3x) || defined(SUPLA_SHT_AUTODETECT)
+    S_SHT3X,
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_SI7021
+    S_SI702,
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_MAX6675
+    S_MAX6675,
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_NTC_10K
+    S_NTC_10K,
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_BMP280
+    S_BMP280,
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_MPX_5XXX
+    S_MPX_5XXX,
+    S_MPX_5XXX_PERCENT,
+#else
+    S_EMPTY, S_EMPTY,
+#endif
+#ifdef SUPLA_ANALOG_READING_MAP
+    "ANALOG READING",
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_VL53L0X
+    "VL53L0X",
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_DIRECT_LINKS_SENSOR_THERMOMETR
+    "Direct Links Temp",
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_HDC1080
+    "HDC1080",
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_HLW8012
+    "HLW8012",
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_PZEM_V_3
+    "PZEM-004T V3",
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_CSE7766
+    "CSE7766",
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_LIMIT_SWITCH
+    S_LIMIT_SWITCH,
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_MAX31855
+    S_MAX31855,
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_VINDRIKTNING_IKEA
+    S_VINDRIKTNING_IKEA,
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_PMSX003
+    S_PMSX003_PM25,
+#else
+    S_EMPTY,
+#endif
+#ifdef SUPLA_ADE7953
+    "ADE7953",
+#else
+    S_EMPTY,
+#endif
+};
+#endif
+
+#ifdef SUPLA_DIRECT_LINKS_MULTI_SENSOR
+enum DIRECT_LINKS_TYPE
+{
+  DIRECT_LINKS_TYPE_OFF,
+  DIRECT_LINKS_TYPE_TEMP,
+  DIRECT_LINKS_TYPE_TEMP_HYGR,
+  DIRECT_LINKS_TYPE_PRESS,
+  DIRECT_LINKS_TYPE_ELECTRICITY_METER,
+  DIRECT_LINKS_TYPE_COUNT
+};
+
+const char* const DIRECT_LINKS_TYPE_LIST_P[] PROGMEM = {S_OFF, S_TEMPERATURE, S_TEMP_HYGR, S_PRESS, S_ELECTRICITY_METER};
+#endif
 
 #endif  // SuplaCommonPROGMEM_h

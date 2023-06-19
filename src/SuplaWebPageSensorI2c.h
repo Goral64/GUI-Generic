@@ -19,25 +19,35 @@
 
 #include "SuplaDeviceGUI.h"
 
-#if defined(SUPLA_BME280) || defined(SUPLA_SHT3x) || defined(SUPLA_SI7021) || defined(SUPLA_OLED) || defined(SUPLA_MCP23017) || \
-    defined(SUPLA_BMP280) || defined(SUPLA_VL53L0X) || defined(SUPLA_HDC1080)
+#if defined(SUPLA_BME280) || defined(SUPLA_SHT3x) || defined(SUPLA_SI7021) || defined(SUPLA_OLED) || defined(GUI_SENSOR_I2C_EXPENDER) ||         \
+    defined(SUPLA_BMP280) || defined(SUPLA_VL53L0X) || defined(SUPLA_HDC1080) || defined(SUPLA_LCD_HD44780) || defined(SUPLA_BH1750) || \
+    defined(SUPLA_MAX44009) || defined(SUPLA_SHT_AUTODETECT)
 #define GUI_SENSOR_I2C
 #endif
 
-#ifdef GUI_SENSOR_I2C
+#if defined(SUPLA_ADE7953)
+#define GUI_SENSOR_I2C_ENERGY_METER
+#endif
 
-enum _sensorI2C
+enum _sensor
 {
   SENSOR_I2C_BME280,
   SENSOR_I2C_SHT3x,
   SENSOR_I2C_SI7021,
-  SENSOR_I2C_MAX6675,
+  SENSOR_SPI_MAX6675,
   SENSOR_I2C_OLED,
   SENSOR_I2C_MCP23017,
   SENSOR_I2C_BMP280,
   SENSOR_I2C_VL53L0X,
   SENSOR_I2C_HDC1080,
+  SENSOR_I2C_HD44780,
+  SENSOR_SPI_MAX31855,
+  SENSOR_I2C_BH1750,
+  SENSOR_I2C_MAX44009,
+  SENSOR_I2C_PCF857X
 };
+
+#if defined(GUI_SENSOR_I2C) || defined(GUI_SENSOR_I2C_ENERGY_METER)
 
 #if defined(SUPLA_BME280) || defined(SUPLA_BMP280)
 enum _bmeAdress
@@ -61,15 +71,39 @@ enum _shtAdress
 };
 #endif
 
+#ifdef SUPLA_LCD_HD44780
+enum _LCDAdress
+{
+  HD44780_ADDRESS_0X20 = 1,
+  HD44780_ADDRESS_0X21,
+  HD44780_ADDRESS_0X22,
+  HD44780_ADDRESS_0X23,
+  HD44780_ADDRESS_0X24,
+  HD44780_ADDRESS_0X25,
+  HD44780_ADDRESS_0X26,
+  HD44780_ADDRESS_0X27,
+  HD44780_ADDRESS_0X38,
+  HD44780_ADDRESS_0X3F,
+};
+#endif
+
 #define PATH_I2C "i2c"
 
 #define INPUT_SDA_GPIO "sdag"
 #define INPUT_SCL_GPIO "sclg"
-#define INPUT_SHT3x    "sht30"
-#define INPUT_SI7021   "si7021"
 
-#ifdef SUPLA_OLED
+#ifdef SUPLA_SHT3x
+#define INPUT_SHT3x "sht30"
+#endif
+
+#ifdef SUPLA_SI7021
+#define INPUT_SI7021 "si7021"
+#endif
+
+#if defined(SUPLA_OLED) || defined(SUPLA_LCD_HD44780)
 #define INPUT_OLED                 "oled"
+#define INPUT_LCD                  "ilcd"
+#define INPUT_HD44780_TYPE         "iht"
 #define INPUT_OLED_ANIMATION       "oleda"
 #define INPUT_OLED_BRIGHTNESS_TIME "oledb"
 #define INPUT_OLED_BRIGHTNESS_LVL  "oledc"
@@ -77,9 +111,7 @@ enum _shtAdress
 #ifndef INPUT_BUTTON_GPIO
 #define INPUT_BUTTON_GPIO "btg"
 #endif
-#endif  // SUPLA_OLED
-
-#define INPUT_MCP23017 "mcp"
+#endif
 
 void createWebPageSensorI2c();
 void handleSensorI2c(int save = 0);
@@ -91,6 +123,31 @@ void handleSensorI2cSave();
 
 #ifdef SUPLA_HDC1080
 #define INPUT_HDC1080 "ihdc"
+#endif
+
+#ifdef SUPLA_BH1750
+#define INPUT_BH1750 "ibh"
+#endif
+
+#ifdef SUPLA_MAX44009
+#define INPUT_MAX44009 "imax"
+#endif
+
+#ifdef SUPLA_ADE7953
+#define INPUT_ADE7953_IRQ           "iai"
+#define INPUT_ADE7953_COUNTER_VALUE "iacv"
+#endif
+
+#ifdef GUI_SENSOR_I2C_EXPENDER
+#define INPUT_MCP23017 "imcp"
+#endif
+
+#if defined(SUPLA_PCF8575) || defined(SUPLA_PCF8574)
+#define INPUT_PCF857x "ipcf"
+#endif
+
+#ifdef SUPLA_SHT_AUTODETECT
+#define INPUT_SUPLA_SHT_AUTODETECT "issa"
 #endif
 
 #endif

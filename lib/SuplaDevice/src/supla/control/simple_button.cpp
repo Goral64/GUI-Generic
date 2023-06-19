@@ -16,6 +16,7 @@
 
 #include "button.h"
 #include "../io.h"
+#include "../time.h"
 
 Supla::Control::ButtonState::ButtonState(int pin, bool pullUp, bool invertLogic)
     : debounceTimeMs(0),
@@ -106,4 +107,3 @@ void Supla::Control::SimpleButton::setDebounceDelay(unsigned int newDelayMs) {
 void Supla::Control::ButtonState::setDebounceDelay(unsigned int newDelayMs) {
   debounceDelayMs = newDelayMs;
 }
-

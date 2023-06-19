@@ -26,18 +26,14 @@
 #include <time.h>
 #endif
 
+#define CURENT_VERSION   1
 #define CONFIG_FILE_PATH "/dat"
 
-#define DEFAULT_HOSTNAME "GUI Generic"
-
+#define DEFAULT_HOSTNAME   "GUI Generic"
 #define DEFAULT_LOGIN      "admin"
 #define DEFAULT_LOGIN_PASS "pass"
+#define DEFAULT_EMAIL      "email@address.com"
 
-#define DEFAULT_SERVER "svrX.supla.org"
-#define DEFAULT_EMAIL  "email@address.com"
-
-#define MAX_GUID                SUPLA_GUID_SIZE
-#define MAX_AUTHKEY             SUPLA_GUID_SIZE
 #define MAX_SSID                32
 #define MAX_PASSWORD            64
 #define MIN_PASSWORD            4
@@ -58,6 +54,7 @@
 #define MAX_DIRECT_LINK      5
 #define MAX_VIRTUAL_RELAY    10
 #define MAX_BRIDGE_RF        10
+#define MAX_ANALOG_BUTTON    5
 
 #ifdef ARDUINO_ARCH_ESP8266
 #define MAX_GPIO 17
@@ -92,11 +89,11 @@ enum _key
   KEY_ADDR_DS18B20,
   KEY_NAME_SENSOR,
   KEY_GPIO,
-  KEY_LEVEL_LED = KEY_GPIO + MAX_GPIO + 1,
+  KEY_HD44780_TYPE = KEY_GPIO + MAX_GPIO + 1,
   KEY_OLED_ANIMATION,
   KEY_OLED_BACK_LIGHT_TIME,
   KEY_MAX_RGBW,
-  KEY_FOR_USE,
+
   KEY_PUSHOVER_TOKEN,
   KEY_PUSHOVER_USER,
   KEY_PUSHOVER_MASSAGE,
@@ -113,8 +110,8 @@ enum _key
   KEY_ENABLE_SSL,
   KEY_OLED_BACK_LIGHT,
   KEY_DEEP_SLEEP_TIME,
-  KEY_MAX_DIRECT_LINKS_SENSOR_THERMOMETR,
-  KEY_DIRECT_LINKS_SENSOR_THERMOMETR,
+  KEY_MAX_DIRECT_LINKS_SENSOR,
+  KEY_DIRECT_LINKS_SENSOR,
   KEY_CONDITIONS_SENSOR_NUMBER,
   KEY_VIRTUAL_RELAY,
   KEY_VIRTUAL_RELAY_MEMORY,
@@ -127,10 +124,25 @@ enum _key
   KEY_RF_BRIDGE_PULSE_LENGTHINT,
   KEY_RF_BRIDGE_REPEAT,
 
+  KEY_AT_MULTICLICK_TIME,
+  KEY_AT_HOLD_TIME,
+
+  KEY_NUMBER_BUTTON,
+  KEY_ANALOG_BUTTON,
+  KEY_ANALOG_INPUT_EXPECTED,
+
+  KEY_MAX_ANALOG_READING,
+
+  KEY_FORCE_RESTART_ESP,
+  KEY_ACTIVE_EXPENDER,
+
+  KEY_DIRECT_LINKS_TYPE,
+
+  // KEY_VERSION_CONFIG,
+
   OPTION_COUNT
 };
 
-//#define GPIO      "GPIO"
 #define SEPARATOR ','
 
 enum _settings
@@ -151,7 +163,8 @@ enum _settings
   MCP23017_FUNCTION_3,
   MCP23017_NR_4,
   MCP23017_FUNCTION_4,
-  INVERSED_BUTTON
+  INVERSED_BUTTON,
+  CFG_LED
 };
 
 enum _function
@@ -190,7 +203,11 @@ enum _function
   FUNCTION_ANALOG_READING,
   FUNCTION_BUTTON_STOP,
   FUNCTION_RF_BRIDGE_TRANSMITTER,
-  FUNCTION_RF_BRIDGE_RECEIVE
+  FUNCTION_RF_BRIDGE_RECEIVE,
+  FUNCTION_VINDRIKTNING_IKEA,
+  FUNCTION_PMSX003_RX,
+  FUNCTION_PMSX003_TX,
+  FUNCTION_ADE7953_IRQ
 };
 
 enum _e_onfig
@@ -203,23 +220,21 @@ enum _e_onfig
   E_CONFIG_MAX
 };
 
-#define CONFIG_MAX_OPTIONS 100
-
-#define ESP8226_CONFIG_V1 2681
+#define CONFIG_MAX_OPTIONS 200
 
 class ConfigOption {
  public:
-  ConfigOption(uint8_t key, const char *value, int maxLength, uint8_t version, bool loadKey);
+  ConfigOption(uint8_t key, const char *value, int maxLength, bool loadKey);
   uint8_t getKey();
   const char *getValue();
   int getValueInt();
+  bool getValueBool();
   const char *getValueHex(size_t size);
   int getValueElement(int element);
 
   int getLength();
   void setLength(int maxLength);
   bool getLoadKey();
-  uint8_t getVersion();
 
   void setValue(const char *value);
   const String getElement(int index);
@@ -230,26 +245,25 @@ class ConfigOption {
   uint8_t _key;
   char *_value;
   uint16_t _maxLength;
-  uint8_t _version;
   bool _loadKey;
 };
 
 class SuplaConfigManager {
  public:
   SuplaConfigManager();
+  bool SPIFFSbegin();
   bool migrationConfig();
-  uint8_t addKey(uint8_t key, int maxLength, uint8_t version = 1, bool loadKey = true);
-  uint8_t addKey(uint8_t key, const char *value, int maxLength, uint8_t version = 1, bool loadKey = true);
+  uint8_t addKey(uint8_t key, int maxLength, bool loadKey = true);
+  uint8_t addKey(uint8_t key, const char *value, int maxLength, bool loadKey = true);
   uint8_t deleteKey(uint8_t key);
 
-  bool checkFileConvert(int size);
-  int sizeFile();
-  uint8_t load(uint8_t version = 99, bool configParse = true);
+  uint8_t load(bool configParse = true);
   uint8_t save();
   void showAllValue();
   void deleteAllValues();
   void deleteDeviceValues();
   void deleteWifiSuplaAdminValues();
+  void deleteGPIODeviceValues();
 
   ConfigOption *get(uint8_t key);
   bool set(uint8_t key, int value);

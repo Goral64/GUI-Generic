@@ -1,5 +1,5 @@
 {
-	"version" : "4.2.7",
+	"version": "4.13.13",
 	"Opis struktury": {
 		"SEKCJA": {
 			"SUPLA_OPTION": {
@@ -223,7 +223,6 @@
 			"name": "Warunkowanie przekaźnika",
 			"desc": "Umożliwia sterowanie przekaźnikiem w zależnośći od wartości sensora.",
 			"defOn": false,
-			"new": true,
 			"en": {
 				"name": "Conditioning of relay",
 				"desc": "It allows you to control the relay depending on the sensor value."
@@ -247,12 +246,15 @@
 			"defOn": false,
 			"depOn": [
 				"SUPLA_ROLLERSHUTTER",
-				"SUPLA_RGBW"
+				"SUPLA_RGBW",
+				"SUPLA_ACTION_TRIGGER",
+				"SUPLA_OLED"
 			],
 			"depOff": [
 				"SUPLA_RELAY",
 				"SUPLA_ROLLERSHUTTER",
-				"SUPLA_RGBW"
+				"SUPLA_RGBW",
+				"SUPLA_ACTION_TRIGGER"
 			],
 			"en": {
 				"name": "Buttons",
@@ -269,6 +271,23 @@
 			"fr": {
 				"name": "Boutons",
 				"desc": "Paramètres de l´appareil->Boutons. Il permet l´utilisation de boutons ainsi que d´autres fonctionnalités."
+			}
+		},
+		"SUPLA_ACTION_TRIGGER": {
+			"name": "Wyzwalacze akcji",
+			"desc": "Pozwalają na wykonanie dowolnej akcji na dowolnym posiadanym przez Ciebie urządzeniu.",
+			"defOn": false,
+			"en": {
+				"name": "Action Trigger"
+			},
+			"es": {
+				"name": "Action Trigger"
+			},
+			"de": {
+				"name": "Action Trigger"
+			},
+			"fr": {
+				"name": "Action Trigger"
 			}
 		},
 		"SUPLA_ROLLERSHUTTER": {
@@ -380,7 +399,6 @@
 			"name": "Bramka RF 315/433MHz",
 			"desc": "",
 			"defOn": false,
-			"new": true,
 			"en": {
 				"name": "Bridge RF 315/433MHz",
 				"desc": ""
@@ -396,6 +414,73 @@
 			"fr": {
 				"name": "Liens directs",
 				"desc": ""
+			}
+		}
+	},
+	"EXPANDERS": {
+		"SUPLA_MCP23017": {
+			"name": "MCP23017",
+			"desc": "Ustawienia urządzenia->I2C. Umożliwia obsługę rozszerzenia portów x16 MCP2317.",
+			"defOn": false,
+			"en": {
+				"name": "MCP23017",
+				"desc": "Device settings->I2C. Supports MCP2317 x16 port expansion."
+			},
+			"es": {
+				"name": "MCP23017",
+				"desc": "Configuración del dispositivo->I2C. Admite expansión de puertos MCP2317 x16."
+			},
+			"de": {
+				"name": "MCP23017",
+				"desc": "Geräteeinstellungen->I2C. Unterstützt die Erweiterung des MCP2317 x16-Ports."
+			},
+			"fr": {
+				"name": "MCP23017",
+				"desc": "Paramètres de l´appareil->I2C. Prend en charge l´extension de port MCP2317 x16."
+			}
+		},
+		"SUPLA_PCF8575": {
+			"name": "PCF8575",
+			"desc": "Ustawienia urządzenia->I2C. Umożliwia obsługę rozszerzenia portów x16 PCF8575.",
+			"defOn": false,
+			"new": true,
+			"en": {
+				"name": "PCF8575",
+				"desc": "Device settings->I2C. Supports PCF8575 x16 port expansion."
+			},
+			"es": {
+				"name": "PCF8575",
+				"desc": "Configuración del dispositivo->I2C. Admite expansión de puertos PCF8575 x16."
+			},
+			"de": {
+				"name": "PCF8575",
+				"desc": "Geräteeinstellungen->I2C. Unterstützt die Erweiterung des PCF8575 x16-Ports."
+			},
+			"fr": {
+				"name": "PCF8575",
+				"desc": "Paramètres de l´appareil->I2C. Prend en charge l´extension de port PCF8575 x16."
+			}
+		},
+		"SUPLA_PCF8574": {
+			"name": "PCF8574/A",
+			"desc": "Ustawienia urządzenia->I2C. Umożliwia obsługę rozszerzenia portów x8 PCF8574/A.",
+			"defOn": false,
+			"new": true,
+			"en": {
+				"name": "PCF8574/A",
+				"desc": "Device settings->I2C. Supports PCF8574/A x8 port expansion."
+			},
+			"es": {
+				"name": "PCF8574/A",
+				"desc": "Configuración del dispositivo->I2C. Admite expansión de puertos PCF8574 x8."
+			},
+			"de": {
+				"name": "PCF8574/A",
+				"desc": "Geräteeinstellungen->I2C. Unterstützt die Erweiterung des PCF8574/A x8-Ports."
+			},
+			"fr": {
+				"name": "PCF8574/A",
+				"desc": "Paramètres de l´appareil->I2C. Prend en charge l´extension de port PCF8574/A x8."
 			}
 		}
 	},
@@ -549,6 +634,27 @@
 				"desc": "Paramètres de l´appareil->I2C. Prend en charge les capteurs de la série SHT3x."
 			}
 		},
+		"SUPLA_SHT_AUTODETECT": {
+			"name": "Sensor SHTxx",
+			"desc": "Ustawienia urządzenia->I2C. Umożliwia obsługę sensorów serii SHTxx.",
+			"defOn": false,
+			"en": {
+				"name": "SHTxx sensor",
+				"desc": "Device settings->I2C. Supports SHTxx series sensors."
+			},
+			"es": {
+				"name": "Sensor SHT3x",
+				"desc": "Configuración del dispositivo->I2C. Admite sensores de la serie SHTxx."
+			},
+			"de": {
+				"name": "SHTxx Sensor",
+				"desc": "Geräteeinstellungen->I2C. Unterstützt Sensoren der SHTxx-Serie."
+			},
+			"fr": {
+				"name": "Capteur SHTxx",
+				"desc": "Paramètres de l´appareil->I2C. Prend en charge les capteurs de la série SHTxx."
+			}
+		},
 		"SUPLA_SI7021": {
 			"name": "Sensor Si7021",
 			"desc": "Ustawienia urządzenia->I2C. Umożliwia obsługę sensorów Si7021.",
@@ -595,7 +701,6 @@
 			"name": "Sensor HDC1080",
 			"desc": "Ustawienia urządzenia->I2C. Umożliwia obsługę sensorów HDC1080.",
 			"defOn": false,
-			"new": true,
 			"en": {
 				"name": "HDC1080 sensor",
 				"desc": "Device settings->I2C. Supports HDC1080 sensors."
@@ -614,45 +719,89 @@
 			}
 		},
 		"SUPLA_OLED": {
-			"name": "Wyświetlacz OLED",
-			"desc": "Ustawienia urządzenia->I2C. Umożliwoa obsługę wyświetlacza OLED.",
+			"name": "Wyświetlacz OLED SSD1306, SH1106",
+			"desc": "Ustawienia urządzenia->I2C. Umożliwoa obsługę wyświetlacza OLED SSD1306, SH1106.",
 			"defOn": false,
 			"en": {
-				"name": "OLED display",
-				"desc": "Device settings->I2C. It enables the operation of an OLED display."
+				"name": "OLED SSD1306, SH1106 display",
+				"desc": "Device settings->I2C. It enables the operation of an OLED SSD1306, SH1106 display."
 			},
 			"es": {
-				"name": "Pantalla OLED",
-				"desc": "Configuración del dispositivo->I2C. Permite el funcionamiento de una pantalla OLED."
+				"name": "Pantalla OLED SSD1306, SH1106",
+				"desc": "Configuración del dispositivo->I2C. Permite el funcionamiento de una pantalla OLED SSD1306, SH1106."
 			},
 			"de": {
-				"name": "OLED-Anzeige",
-				"desc": "Geräteeinstellungen->I2C. Es ermöglicht den Betrieb eines OLED-Displays."
+				"name": "OLED SSD1306, SH1106-Anzeige",
+				"desc": "Geräteeinstellungen->I2C. Es ermöglicht den Betrieb eines OLED SSD1306, SH1106-Displays."
 			},
 			"fr": {
-				"name": "Écran OLED",
-				"desc": "Paramètres de l´appareil->I2C. Il permet le fonctionnement d´un écran OLED."
+				"name": "Écran OLED SSD1306, SH1106",
+				"desc": "Paramètres de l´appareil->I2C. Il permet le fonctionnement d´un écran OLED SSD1306, SH1106."
 			}
 		},
-		"SUPLA_MCP23017": {
-			"name": "Ekspander portów x16 MCP23017",
-			"desc": "Ustawienia urządzenia->I2C. Umożliwia obsługę rozszerzenia portów x16 MCP2317.",
+		"SUPLA_LCD_HD44780": {
+			"name": "Wyświetlacz LCD HD44780",
+			"desc": "Ustawienia urządzenia->I2C. Umożliwoa obsługę wyświetlacza LCD HD44780.",
 			"defOn": false,
 			"en": {
-				"name": "MCP23017 x16 port expander",
-				"desc": "Device settings->I2C. Supports MCP2317 x16 port expansion."
+				"name": "LCD HD44780 display",
+				"desc": "Device settings->I2C. It enables the operation of an LCD HD44780 display."
 			},
 			"es": {
-				"name": "Expansor de puerto MCP23017 x16",
-				"desc": "Configuración del dispositivo->I2C. Admite expansión de puertos MCP2317 x16."
+				"name": "Pantalla LCD HD44780",
+				"desc": "Configuración del dispositivo->I2C. Permite el funcionamiento de una pantalla LCD HD44780."
 			},
 			"de": {
-				"name": "MCP23017 x16 Port Expander",
-				"desc": "Geräteeinstellungen->I2C. Unterstützt die Erweiterung des MCP2317 x16-Ports."
+				"name": "LCD HD44780-Anzeige",
+				"desc": "Geräteeinstellungen->I2C. Es ermöglicht den Betrieb eines LCD HD44780-Displays."
 			},
 			"fr": {
-				"name": "Extension de port x16 MCP23017",
-				"desc": "Paramètres de l´appareil->I2C. Prend en charge l´extension de port MCP2317 x16."
+				"name": "Écran LCD HD44780",
+				"desc": "Paramètres de l´appareil->I2C. Il permet le fonctionnement d´un écran LCD HD44780."
+			}
+		},
+		"SUPLA_BH1750": {
+			"name": "Sensor BH1750",
+			"desc": "Ustawienia urządzenia->I2C. Czujnik natężenia światła BH1750",
+			"defOn": false,
+			"new": true,
+			"en": {
+				"name": "BH1750 sensor",
+				"desc": "Device settings->I2C. Light intensity sensor BH1750."
+			},
+			"es": {
+				"name": "Sonda BH1750",
+				"desc": "Configuración del dispositivo->I2C. Sensor de intensidad de luz BH1750."
+			},
+			"de": {
+				"name": "Fühler BH1750",
+				"desc": "Geräteeinstellungen->I2C. Lichtstärkesensor BH1750."
+			},
+			"fr": {
+				"name": "Capteur BH1750",
+				"desc": "Paramètres de l´appareil->I2C. Capteur d'intensité lumineuse BH1750."
+			}
+		},
+		"SUPLA_MAX44009": {
+			"name": "Sensor MAX44009",
+			"desc": "Ustawienia urządzenia->I2C. Czujnik natężenia światła MAX44009",
+			"defOn": false,
+			"new": true,
+			"en": {
+				"name": "MAX44009 sensor",
+				"desc": "Device settings->I2C. Light intensity sensor MAX44009."
+			},
+			"es": {
+				"name": "Sonda MAX44009",
+				"desc": "Configuración del dispositivo->I2C. Sensor de intensidad de luz MAX44009."
+			},
+			"de": {
+				"name": "Fühler MAX44009",
+				"desc": "Geräteeinstellungen->I2C. Lichtstärkesensor MAX44009."
+			},
+			"fr": {
+				"name": "Capteur MAX44009",
+				"desc": "Paramètres de l´appareil->I2C. Capteur d'intensité lumineuse MAX44009."
 			}
 		}
 	},
@@ -677,6 +826,27 @@
 				"name": "Thermocouple MAX6675",
 				"desc": "Paramètres de l´appareil->SPI. Prend en charge le thermocouple MAX6675."
 			}
+		},
+		"SUPLA_MAX31855": {
+			"name": "Termopara MAX31855",
+			"desc": "Ustawienia urządzenia->SPI. Umożliwoa obsługę termopary MAX31855.",
+			"defOn": false,
+			"en": {
+				"name": "Thermocouple MAX31855",
+				"desc": "Device settings->SPI. Supports MAX31855 thermocouple."
+			},
+			"es": {
+				"name": "Termopar MAX31855",
+				"desc": "Configuración del dispositivo->SPI. Soporta termopar MAX31855."
+			},
+			"de": {
+				"name": "Thermoelement MAX31855",
+				"desc": "Geräteeinstellungen->SPI. Unterstützt das MAX31855-Thermoelement."
+			},
+			"fr": {
+				"name": "Thermocouple MAX31855",
+				"desc": "Paramètres de l´appareil->SPI. Prend en charge le thermocouple MAX31855."
+			}
 		}
 	},
 	"ANALOG": {
@@ -684,10 +854,6 @@
 			"name": "Pomiar analogowy (ADC Pin)",
 			"desc": "Ustawienia urządzenia->Analog. Umożliwia obsługę pomiaru napięcia na wejściu ADC Pin.",
 			"defOn": false,
-			"depOn": [
-				"SUPLA_NTC_10K",
-				"SUPLA_MPX_5XXX"
-			],
 			"en": {
 				"name": "Analog measurement (ADC Pin)",
 				"desc": "Device settings->Analog. Enables support for voltage measurement at ADC Pin input."
@@ -754,68 +920,26 @@
 			}
 		}
 	},
-	"OTHER": {
-		"SUPLA_RGBW": {
-			"name": "RGBW, RGB, Dimmer",
-			"desc": "Ustawienia urządzenia->Inne. Umożliwia obsługę urządzeń RGBW, RGB i ściemniaczy.",
-			"defOn": false,
-			"en": {
-				"name": "RGBW, RGB, Dimmer",
-				"desc": "Device settings->Other. Enables support for RGBW, RGB devices and dimmers."
-			},
-			"es": {
-				"name": "RGBW, RGB, atenuador",
-				"desc": "Configuración del dispositivo->Otro. Permite la compatibilidad con reguladores y dispositivos RGBW, RGB."
-			},
-			"de": {
-				"name": "RGBW, RGB, Dimmer",
-				"desc": "Geräteeinstellungen->Andere. Aktiviert die Unterstützung für RGBW, RGB-Geräte und Dimmer."
-			},
-			"fr": {
-				"name": "RGBW, RGB, Gradateur",
-				"desc": "Paramètres de l´appareil->Autre. Active la prise en charge des périphériques RGBW, RGB et des gradateurs."
-			}
-		},
-		"SUPLA_HC_SR04": {
-			"name": "Czujnik odległości HC-SR04",
-			"desc": "Ustawienia urządzenia->Inne. Umożliwia obsługę czujnika odległości HC-SR04.",
-			"defOn": false,
-			"en": {
-				"name": "HC-SR04 distance sensor",
-				"desc": "Device settings->Other. Enables operation of the HC-SR04 distance sensor."
-			},
-			"es": {
-				"name": "Sensor de distancia HC-SR04",
-				"desc": "Configuración del dispositivo->Otro. Habilita el funcionamiento del sensor de distancia HC-SR04."
-			},
-			"de": {
-				"name": "HC-SR04 Abstandssensor",
-				"desc": "Geräteeinstellungen->Andere. Aktiviert den Betrieb des Abstandssensors HC-SR04."
-			},
-			"fr": {
-				"name": "Capteur de distance HC-SR04",
-				"desc": "Paramètres de l´appareil->Autre. Permet le fonctionnement du capteur de distance HC-SR04."
-			}
-		},
+	"ENERGY_METER": {
 		"SUPLA_HLW8012": {
-			"name": "Licznik energii HLW8012",
-			"desc": "Ustawienia urządzenia->Inne. Umożliwia obsługę licznika energii HLW8012.",
+			"name": "Licznik energii HLW8012, BL0937",
+			"desc": "Ustawienia urządzenia->Inne. Umożliwia obsługę licznika energii HLW8012, BL0937.",
 			"defOn": false,
 			"en": {
-				"name": "Energy meter HLW8012",
-				"desc": "Device settings->Other. It enables the operation of the energy meter HLW8012."
+				"name": "Energy meter HLW8012, BL0937",
+				"desc": "Device settings->Other. It enables the operation of the energy meter HLW8012, BL0937."
 			},
 			"es": {
-				"name": "Contador de energía HLW8012",
-				"desc": "Configuración del dispositivo->Otro. Permite el funcionamiento del contador de energía HLW8012."
+				"name": "Contador de energía HLW8012, BL0937",
+				"desc": "Configuración del dispositivo->Otro. Permite el funcionamiento del contador de energía HLW8012, BL0937."
 			},
 			"de": {
-				"name": "Energiezähler HLW8012",
-				"desc": "Geräteeinstellungen->Andere. Es ermöglicht den Betrieb des Energiezählers HLW8012."
+				"name": "Energiezähler HLW8012, BL0937",
+				"desc": "Geräteeinstellungen->Andere. Es ermöglicht den Betrieb des Energiezählers HLW8012, BL0937."
 			},
 			"fr": {
-				"name": "Compteur d´énergie HLW8012",
-				"desc": "Paramètres de l´appareil->Autre. Il permet le fonctionnement du compteur d´énergie HLW8012."
+				"name": "Compteur d´énergie HLW8012, BL0937",
+				"desc": "Paramètres de l´appareil->Autre. Il permet le fonctionnement du compteur d´énergie HLW8012, BL0937."
 			}
 		},
 		"SUPLA_PZEM_V_3": {
@@ -860,6 +984,71 @@
 				"desc": "Paramètres de l´appareil->Autre. Il permet le fonctionnement du compteur d´énergie CSE7766."
 			}
 		},
+		"SUPLA_ADE7953": {
+			"name": "Licznik energii ADE7953",
+			"desc": "Ustawienia urządzenia->I2C. Umożliwia obsługę licznika energii ADE7953.",
+			"defOn": false,
+			"en": {
+				"name": "Energy meter ADE7953",
+				"desc": "Device settings->I2C. It enables the operation of the energy meter ADE7953."
+			},
+			"es": {
+				"name": "Contador de energía ADE7953",
+				"desc": "Configuración del dispositivo->I2C. Permite el funcionamiento del contador de energía ADE7953."
+			},
+			"de": {
+				"name": "Energiezähler ADE7953",
+				"desc": "Geräteeinstellungen->I2C. Es ermöglicht den Betrieb des Energiezählers ADE7953."
+			},
+			"fr": {
+				"name": "Compteur d´énergie ADE7953",
+				"desc": "Paramètres de l´appareil->I2C. Il permet le fonctionnement du compteur d´énergie ADE7953."
+			}
+		}
+	},
+	"OTHER": {
+		"SUPLA_RGBW": {
+			"name": "RGBW, RGB, Dimmer",
+			"desc": "Ustawienia urządzenia->Inne. Umożliwia obsługę urządzeń RGBW, RGB i ściemniaczy.",
+			"defOn": false,
+			"en": {
+				"name": "RGBW, RGB, Dimmer",
+				"desc": "Device settings->Other. Enables support for RGBW, RGB devices and dimmers."
+			},
+			"es": {
+				"name": "RGBW, RGB, atenuador",
+				"desc": "Configuración del dispositivo->Otro. Permite la compatibilidad con reguladores y dispositivos RGBW, RGB."
+			},
+			"de": {
+				"name": "RGBW, RGB, Dimmer",
+				"desc": "Geräteeinstellungen->Andere. Aktiviert die Unterstützung für RGBW, RGB-Geräte und Dimmer."
+			},
+			"fr": {
+				"name": "RGBW, RGB, Gradateur",
+				"desc": "Paramètres de l´appareil->Autre. Active la prise en charge des périphériques RGBW, RGB et des gradateurs."
+			}
+		},
+		"SUPLA_HC_SR04": {
+			"name": "Czujnik odległości HC-SR04",
+			"desc": "Ustawienia urządzenia->Inne. Umożliwia obsługę czujnika odległości HC-SR04.",
+			"defOn": false,
+			"en": {
+				"name": "HC-SR04 distance sensor",
+				"desc": "Device settings->Other. Enables operation of the HC-SR04 distance sensor."
+			},
+			"es": {
+				"name": "Sensor de distancia HC-SR04",
+				"desc": "Configuración del dispositivo->Otro. Habilita el funcionamiento del sensor de distancia HC-SR04."
+			},
+			"de": {
+				"name": "HC-SR04 Abstandssensor",
+				"desc": "Geräteeinstellungen->Andere. Aktiviert den Betrieb des Abstandssensors HC-SR04."
+			},
+			"fr": {
+				"name": "Capteur de distance HC-SR04",
+				"desc": "Paramètres de l´appareil->Autre. Permet le fonctionnement du capteur de distance HC-SR04."
+			}
+		},
 		"SUPLA_IMPULSE_COUNTER": {
 			"name": "Licznik impulsów",
 			"desc": "Ustawienia urządzenia->Inne. Umożliwia obsługę licznika impulsów.",
@@ -885,7 +1074,6 @@
 			"name": "Linki bezpośrednie - odczyt temperatury",
 			"desc": "Umożliwia odczytywanie temperatury za pomocą linków bezpośrednich.",
 			"defOn": false,
-			"new": true,
 			"en": {
 				"name": "Direct links - temperature reading",
 				"desc": "It allows you to read the temperature using direct links."
@@ -901,6 +1089,52 @@
 			"fr": {
 				"name": "Liens directs - relevé de température",
 				"desc": "Il vous permet de lire la température à l'aide de liens directs."
+			}
+		}
+	},
+	"AIR_QUALITY_SENSORS": {
+		"SUPLA_VINDRIKTNING_IKEA": {
+			"name": "IKEA VINDRIKTNING",
+			"desc": "Ustawienia urządzenia->Inne. Czujnik cząstek stałych PM1006",
+			"defOn": false,
+			"new": true,
+			"en": {
+				"name": "IKEA VINDRIKTNING",
+				"desc": "Device settings->Other. Particulate Matter Sensor with PM1006 inside."
+			},
+			"es": {
+				"name": "IKEA VINDRIKTNING",
+				"desc": "Configuración del dispositivo->Otro. Sensor de partículas con PM1006 en el interior"
+			},
+			"de": {
+				"name": "IKEA VINDRIKTNING",
+				"desc": "Geräteeinstellungen->Andere. Feinstaubsensor mit PM1006 im Inneren."
+			},
+			"fr": {
+				"name": "IKEA VINDRIKTNING",
+				"desc": "Paramètres de l´appareil->Autre. Capteur de particules avec PM1006 à l'intérieur"
+			}
+		},
+		"SUPLA_PMSX003": {
+			"name": "PMSx003",
+			"desc": "Ustawienia urządzenia->Inne. Czujnik cząstek stałych: PM1.0, PM2.5, PM10. Obsługiwane czujniki PMS1003, PMS3003, PMS5003, PMS5003S, PMS5003T, PMS5003ST, PMS7003, PMSA003.",
+			"defOn": false,
+			"new": true,
+			"en": {
+				"name": "PMSx003",
+				"desc": "Device settings->Other. Particulate sensor: PM1.0, PM2.5, PM10. Supported sensors PMS1003, PMS3003, PMS5003, PMS5003S, PMS5003T, PMS5003ST, PMS7003, PMSA003."
+			},
+			"es": {
+				"name": "PMSx003",
+				"desc": "Configuración del dispositivo->Otro. Sensor de partículas: PM1.0, PM2.5, PM10. Sensores compatibles PMS1003, PMS3003, PMS5003, PMS5003S, PMS5003T, PMS5003ST, PMS7003, PMSA003."
+			},
+			"de": {
+				"name": "PMSx003",
+				"desc": "Geräteeinstellungen->Andere. Partikelsensor: PM1.0, PM2.5, PM10. Unterstützte Sensoren PMS1003, PMS3003, PMS5003, PMS5003S, PMS5003T, PMS5003ST, PMS7003, PMSA003."
+			},
+			"fr": {
+				"name": "PMSx003",
+				"desc": "Paramètres de l´appareil->Autre. Capteur de particules : PM1.0, PM2.5, PM10. Capteurs pris en charge PMS1003, PMS3003, PMS5003, PMS5003S, PMS5003T, PMS5003ST, PMS7003, PMSA003."
 			}
 		}
 	},
@@ -967,6 +1201,28 @@
 			"es": "Prueba",
 			"de": "Prüfung",
 			"fr": "Test"
+		},
+		"AIR_QUALITY_SENSORS": {
+			"pl": "Czujnik czystości powietrza",
+			"en": "Air quality sensor",
+			"es": "Sensor de calidad del aire",
+			"de": "Luftqualitätssensor",
+			"fr": "Capteur de qualité de l'air"
+		},
+		"EXPANDERS": {
+			"pl": "Ekspandery",
+			"en": "Expanders",
+			"es": "Expansores",
+			"de": "Expander",
+			"fr": "Expanseurs"
+		},
+		"ENERGY_METER": {
+			"pl": "Licznik Energii Elektrycznej",
+			"en": "Electric energy meter",
+			"es": "Medidor de energía eléctrica",
+			"de": "Stromzähler",
+			"fr": "Compteur d'énergie électrique"
 		}
+
 	}
 }

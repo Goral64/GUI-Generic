@@ -19,12 +19,17 @@
 
 #include "SuplaDeviceGUI.h"
 
-#if defined(SUPLA_HC_SR04)
+#if defined(SUPLA_HC_SR04) || defined(SUPLA_DIRECT_LINKS_SENSOR_THERMOMETR) || defined(SUPLA_VINDRIKTNING_IKEA) || defined(SUPLA_PMSX003) || \
+    defined(SUPLA_DIRECT_LINKS_MULTI_SENSOR)
 #define GUI_SENSOR_OTHER
 #endif
 
-#if defined(SUPLA_IMPULSE_COUNTER) || defined(SUPLA_HLW8012) || defined(SUPLA_PZEM_V_3) || defined(SUPLA_RGBW) || defined(SUPLA_PUSHOVER) || \
-    defined(GUI_SENSOR_OTHER) || defined(SUPLA_CSE7766) || defined(SUPLA_DIRECT_LINKS_SENSOR_THERMOMETR) || defined(SUPLA_RF_BRIDGE)
+#if defined(SUPLA_HLW8012) || defined(SUPLA_PZEM_V_3) || defined(SUPLA_CSE7766)
+#define GUI_OTHER_ENERGY
+#endif
+
+#if defined(GUI_SENSOR_OTHER) || defined(GUI_OTHER_ENERGY) || defined(SUPLA_IMPULSE_COUNTER) || defined(SUPLA_RGBW) || defined(SUPLA_PUSHOVER) || \
+    defined(SUPLA_RF_BRIDGE)
 #define GUI_OTHER
 #endif
 
@@ -43,6 +48,8 @@ void handleOtherSave();
 #define INPUT_IMPULSE_COUNTER_RAISING_EDGE     "icre"
 #define INPUT_IMPULSE_COUNTER_CHANGE_VALUE     "iccv"
 #define INPUT_MAX_IMPULSE_COUNTER              "imic"
+#define INPUT_LED_IMPULSE_COUNTER              "ilic"
+#define INPUT_LED_INVERSED_IMPULSE_COUNTER     "iliic"
 
 void handleImpulseCounterSet(int save = 0);
 void handleImpulseCounterSaveSet();
@@ -79,6 +86,15 @@ void handleCounterCalibrateSave();
 #define INPUT_PZEM_TX "iptx"
 #endif
 
+#ifdef SUPLA_VINDRIKTNING_IKEA
+#define INPUT_VINDRIKTNING_IKEA_RX "ivirx"
+#endif
+
+#ifdef SUPLA_PMSX003
+#define INPUT_PMSX003_RX "iprx"
+#define INPUT_PMSX003_TX "iptx"
+#endif
+
 #ifdef SUPLA_RGBW
 #define INPUT_RGBW_MAX              "rgbwm"
 #define INPUT_RGBW_RED              "rgbwr"
@@ -86,6 +102,7 @@ void handleCounterCalibrateSave();
 #define INPUT_RGBW_BLUE             "rgbwb"
 #define INPUT_RGBW_BRIGHTNESS       "rgbwbr"
 #define INPUT_RGBW_COLOR_BRIGHTNESS "rgbwcb"
+#define INPUT_RGBW_MEMORY           "irm"
 #endif
 
 #ifdef SUPLA_PUSHOVER
@@ -108,6 +125,12 @@ void handleCounterCalibrateSave();
 #define INPUT_DIRECT_LINKS_SENSOR_THERMOMETR     "idlst"
 #endif
 
+#ifdef SUPLA_DIRECT_LINKS_MULTI_SENSOR
+#define INPUT_DIRECT_LINKS_TYPE       "idlt"
+#define INPUT_MAX_DIRECT_LINKS_SENSOR "imdls"
+#define INPUT_DIRECT_LINKS_SENSOR     "idls"
+#endif
+
 #ifdef SUPLA_RF_BRIDGE
 #define INPUT_RF_BRIDGE_RX "irbr"
 #define INPUT_RF_BRIDGE_TX "irbt"
@@ -116,4 +139,5 @@ void handleCounterCalibrateSave();
 
 void receiveCodeRFBridge();
 #endif
+
 #endif  // SuplaWebPageOther_h

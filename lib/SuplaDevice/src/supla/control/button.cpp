@@ -15,7 +15,7 @@
 */
 
 #include "button.h"
-
+#include <supla/time.h>
 
 Supla::Control::Button::Button(int pin, bool pullUp, bool invertLogic)
     : SimpleButton(pin, pullUp, invertLogic),
@@ -161,4 +161,8 @@ void Supla::Control::Button::setMulticlickTime(unsigned int timeMs, bool bistabl
 
 void Supla::Control::Button::repeatOnHoldEvery(unsigned int timeMs) {
   repeatOnHoldMs = timeMs;
+}
+
+bool Supla::Control::Button::isBistable() const {
+  return bistable;
 }

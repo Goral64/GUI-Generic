@@ -15,6 +15,7 @@
 */
 
 #include <supla/events.h>
+#include <supla/time.h>
 
 #include "therm_hygro_press_meter.h"
 
@@ -22,6 +23,8 @@ Supla::Sensor::ThermHygroPressMeter::ThermHygroPressMeter() {
   pressureChannel.setType(SUPLA_CHANNELTYPE_PRESSURESENSOR);
   pressureChannel.setDefault(SUPLA_CHANNELFNC_PRESSURESENSOR);
 }
+
+Supla::Sensor::ThermHygroPressMeter::~ThermHygroPressMeter() {}
 
 double Supla::Sensor::ThermHygroPressMeter::getPressure() {
   return PRESSURE_NOT_AVAILABLE;

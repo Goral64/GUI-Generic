@@ -17,7 +17,7 @@
 #ifndef _button_h
 #define _button_h
 
-#include <Arduino.h>
+#include <stdint.h>
 #include "simple_button.h"
 
 namespace Supla {
@@ -31,6 +31,7 @@ class Button : public SimpleButton {
   void setHoldTime(unsigned int timeMs);
   void repeatOnHoldEvery(unsigned int timeMs);
   void setMulticlickTime(unsigned int timeMs, bool bistableButton = false);
+  bool isBistable() const;
 
  protected:
   unsigned int holdTimeMs;

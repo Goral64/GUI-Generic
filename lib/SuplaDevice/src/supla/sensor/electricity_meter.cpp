@@ -17,6 +17,10 @@
 #include <string.h>
 
 #include "electricity_meter.h"
+#include "../events.h"
+#include "../condition.h"
+
+#include <supla/time.h>
 
 Supla::Sensor::ElectricityMeter::ElectricityMeter()
     : valueChanged(false), lastReadTime(0), refreshRateSec(5) {
@@ -56,10 +60,10 @@ void Supla::Sensor::ElectricityMeter::updateChannelValues() {
     }
 
     if (over65A) {
-      emValue.measured_values ^= (!EM_VAR_CURRENT);
+      emValue.measured_values &= (~EM_VAR_CURRENT);
       emValue.measured_values |= EM_VAR_CURRENT_OVER_65A;
     } else {
-      emValue.measured_values ^= (!EM_VAR_CURRENT_OVER_65A);
+      emValue.measured_values &= (~EM_VAR_CURRENT_OVER_65A);
       emValue.measured_values |= EM_VAR_CURRENT;
     }
   }
@@ -67,6 +71,7 @@ void Supla::Sensor::ElectricityMeter::updateChannelValues() {
   // Prepare extended channel value
   srpc_evtool_v2_emextended2extended(&emValue, extChannel.getExtValue());
   extChannel.setNewValue(emValue);
+  runAction(Supla::ON_CHANGE);
 }
 
 // energy in 0.00001 kWh
@@ -150,7 +155,7 @@ void Supla::Sensor::ElectricityMeter::setFreq(unsigned _supla_int16_t freq) {
   emValue.measured_values |= EM_VAR_FREQ;
 }
 
-// power in 0.00001 kW
+// power in 0.00001 W
 void Supla::Sensor::ElectricityMeter::setPowerActive(int phase,
                                                      _supla_int_t power) {
   if (phase >= 0 && phase < MAX_PHASES) {
@@ -162,7 +167,7 @@ void Supla::Sensor::ElectricityMeter::setPowerActive(int phase,
   }
 }
 
-// power in 0.00001 kvar
+// power in 0.00001 var
 void Supla::Sensor::ElectricityMeter::setPowerReactive(int phase,
                                                        _supla_int_t power) {
   if (phase >= 0 && phase < MAX_PHASES) {
@@ -174,7 +179,7 @@ void Supla::Sensor::ElectricityMeter::setPowerReactive(int phase,
   }
 }
 
-// power in 0.00001 kVA
+// power in 0.00001 VA
 void Supla::Sensor::ElectricityMeter::setPowerApparent(int phase,
                                                        _supla_int_t power) {
   if (phase >= 0 && phase < MAX_PHASES) {
@@ -250,11 +255,114 @@ Supla::Channel *Supla::Sensor::ElectricityMeter::getChannel() {
   return &extChannel;
 }
 
-void Supla::Sensor::ElectricityMeter::setResreshRate(unsigned int sec) {
+void Supla::Sensor::ElectricityMeter::setRefreshRate(unsigned int sec) {
   refreshRateSec = sec;
   if (refreshRateSec == 0) {
     refreshRateSec = 1;
   }
 }
 
+// TODO: move those addAction methods to separate parent
+// class i.e. ExtChannelElement - similar to ChannelElement
+void Supla::Sensor::ElectricityMeter::addAction(int action, ActionHandler &client, Supla::Condition *condition) {
+  condition->setClient(client);
+  condition->setSource(this);
+  LocalAction::addAction(action, condition, Supla::ON_CHANGE);
+}
 
+void Supla::Sensor::ElectricityMeter::addAction(int action, ActionHandler *client, Supla::Condition *condition) {
+  addAction(action, *client, condition);
+}
+
+// energy 1 == 0.00001 kWh
+unsigned _supla_int64_t Supla::Sensor::ElectricityMeter::getFwdActEnergy(int phase) {
+  if (phase >= 0 && phase < MAX_PHASES) {
+    return emValue.total_forward_active_energy[phase];
+  }
+  return 0;
+}
+
+// energy 1 == 0.00001 kWh
+unsigned _supla_int64_t Supla::Sensor::ElectricityMeter::getRvrActEnergy(int phase) {
+  if (phase >= 0 && phase < MAX_PHASES) {
+    return emValue.total_reverse_active_energy[phase];
+  }
+  return 0;
+}
+
+// energy 1 == 0.00001 kWh
+unsigned _supla_int64_t Supla::Sensor::ElectricityMeter::getFwdReactEnergy(int phase) {
+  if (phase >= 0 && phase < MAX_PHASES) {
+    return emValue.total_forward_reactive_energy[phase];
+  }
+  return 0;
+}
+
+// energy 1 == 0.00001 kWh
+unsigned _supla_int64_t Supla::Sensor::ElectricityMeter::getRvrReactEnergy(int phase) {
+  if (phase >= 0 && phase < MAX_PHASES) {
+    return emValue.total_reverse_reactive_energy[phase];
+  }
+  return 0;
+}
+
+// voltage 1 == 0.01 V
+unsigned _supla_int16_t Supla::Sensor::ElectricityMeter::getVoltage(int phase) {
+  if (phase >= 0 && phase < MAX_PHASES) {
+    return emValue.m[0].voltage[phase];
+  }
+  return 0;
+}
+
+// current 1 == 0.001 A
+unsigned _supla_int_t Supla::Sensor::ElectricityMeter::getCurrent(int phase) {
+  if (phase >= 0 && phase < MAX_PHASES) {
+    return rawCurrent[phase];
+  }
+  return 0;
+}
+
+// Frequency 1 == 0.01 Hz
+unsigned _supla_int16_t Supla::Sensor::ElectricityMeter::getFreq() {
+  return emValue.m[0].freq;
+}
+
+// power 1 == 0.00001 W
+_supla_int_t Supla::Sensor::ElectricityMeter::getPowerActive(int phase) {
+  if (phase >= 0 && phase < MAX_PHASES) {
+    return emValue.m[0].power_active[phase];
+  }
+  return 0;
+}
+
+// power 1 == 0.00001 var
+_supla_int_t Supla::Sensor::ElectricityMeter::getPowerReactive(int phase) {
+  if (phase >= 0 && phase < MAX_PHASES) {
+    return emValue.m[0].power_reactive[phase];
+  }
+  return 0;
+}
+
+// power 1 == 0.00001 VA
+_supla_int_t Supla::Sensor::ElectricityMeter::getPowerApparent(int phase) {
+  if (phase >= 0 && phase < MAX_PHASES) {
+    return emValue.m[0].power_apparent[phase];
+  }
+  return 0;
+}
+
+// power 1 == 0.001
+_supla_int_t Supla::Sensor::ElectricityMeter::getPowerFactor(int phase) {
+  if (phase >= 0 && phase < MAX_PHASES) {
+    return emValue.m[0].power_factor[phase];
+  }
+  return 0;
+}
+
+// phase angle 1 == 0.1 degree
+_supla_int_t Supla::Sensor::ElectricityMeter::getPhaseAngle(int phase) {
+  if (phase >= 0 && phase < MAX_PHASES) {
+    return emValue.m[0].phase_angle[phase];
+  }
+  return 0;
+}
