@@ -34,7 +34,7 @@ void createWebPageRelay() {
       return;
     }
 #ifdef GUI_SENSOR_I2C_EXPENDER
-    if (ConfigESP->checkActiveMCP23017(FUNCTION_RELAY)) {
+    if (Expander->checkActiveExpander(FUNCTION_RELAY)) {
       if (WebServer->httpServer->method() == HTTP_GET)
         handleRelaySetMCP23017();
       else
@@ -64,7 +64,7 @@ void handleRelaySave() {
 
   for (nr = 0; nr < ConfigManager->get(KEY_MAX_RELAY)->getValueInt(); nr++) {
 #ifdef GUI_SENSOR_I2C_EXPENDER
-    if (ConfigESP->checkActiveMCP23017(FUNCTION_RELAY)) {
+    if (Expander->checkActiveExpander(FUNCTION_RELAY)) {
       if (!WebServer->saveGpioMCP23017(INPUT_RELAY_GPIO, FUNCTION_RELAY, nr, INPUT_MAX_RELAY)) {
         handleRelay(6);
         return;
@@ -146,10 +146,6 @@ void handleRelaySaveSet() {
     ConfigESP->setLevel(gpio, WebServer->httpServer->arg(input).toInt());
   }
 
-#ifdef SUPLA_CONDITIONS
-  conditionsWebPageSave(nr_relay.toInt());
-#endif
-
 #if defined(SUPLA_LED)
   if (gpio != GPIO_VIRTUAL_RELAY) {
     input = INPUT_LED;
@@ -162,15 +158,8 @@ void handleRelaySaveSet() {
       input = INPUT_LEVEL_LED;
       input += nr_relay;
 
-      ConfigESP->setLevel(ConfigESP->getGpio(FUNCTION_LED), WebServer->httpServer->arg(input).toInt());
+      ConfigESP->setLevel(ConfigESP->getGpio(nr_relay.toInt(), FUNCTION_LED), WebServer->httpServer->arg(input).toInt());
     }
-  }
-#endif
-
-#if defined(SUPLA_PUSHOVER)
-  if (nr_relay.toInt() <= MAX_PUSHOVER_MESSAGE) {
-    input = INPUT_PUSHOVER_MESSAGE;
-    ConfigManager->setElement(KEY_PUSHOVER_MASSAGE, (nr_relay.toInt()), WebServer->httpServer->arg(input).c_str());
   }
 #endif
 
@@ -179,7 +168,7 @@ void handleRelaySaveSet() {
 #endif
 
 #ifdef SUPLA_RF_BRIDGE
-  if (nr_relay.toInt() <= MAX_BRIDGE_RF) {
+  if (nr_relay.toInt() < MAX_BRIDGE_RF) {
     String input;
 
     input = INPUT_RF_BRIDGE_TYPE;
@@ -244,7 +233,7 @@ void handleRelaySet(int save) {
     addFormHeaderEnd(webContentBuffer);
 
 #ifdef SUPLA_RF_BRIDGE
-    if (nr_relay.toInt() <= MAX_BRIDGE_RF) {
+    if (nr_relay.toInt() < MAX_BRIDGE_RF) {
       String value;
 
       addFormHeader(webContentBuffer, F("RF BRIDGE"));
@@ -254,13 +243,13 @@ void handleRelaySet(int save) {
 
       if (ConfigManager->get(KEY_RF_BRIDGE_TYPE)->getElement(nr_relay.toInt()).toInt() == Supla::GUI::RFBridgeType::TRANSMITTER) {
         value = ConfigManager->get(KEY_RF_BRIDGE_PROTOCOL)->getElement(nr_relay.toInt()).c_str();
-        addTextBox(webContentBuffer, INPUT_RF_BRIDGE_PROTOCO, F("PROTOCO"), value, F("1"), 0, 2, true);
+        addTextBox(webContentBuffer, INPUT_RF_BRIDGE_PROTOCO, F("PROTOCO"), value, F("1..."), 0, 2, true);
 
         value = ConfigManager->get(KEY_RF_BRIDGE_PULSE_LENGTHINT)->getElement(nr_relay.toInt()).c_str();
-        addTextBox(webContentBuffer, INPUT_RF_BRIDGE_PULSE_LENGTHIN, F("PULSE LENGTHINT"), value, F("320"), 0, 4, true);
+        addTextBox(webContentBuffer, INPUT_RF_BRIDGE_PULSE_LENGTHIN, F("PULSE LENGTHINT"), value, F("320..."), 0, 4, true);
 
         value = ConfigManager->get(KEY_RF_BRIDGE_LENGTH)->getElement(nr_relay.toInt()).c_str();
-        addTextBox(webContentBuffer, INPUT_RF_BRIDGE_LENGTH, F("LENGTH"), value, F("24"), 0, 3, true);
+        addTextBox(webContentBuffer, INPUT_RF_BRIDGE_LENGTH, F("LENGTH"), value, F("24..."), 0, 3, true);
 
         selected = ConfigManager->get(KEY_RF_BRIDGE_REPEAT)->getElement(nr_relay.toInt()).toInt();
         addCheckBox(webContentBuffer, INPUT_RF_BRIDGE_REPEAT, F("Powtarzaj[10min]"), selected);
@@ -294,22 +283,8 @@ void handleRelaySet(int save) {
     }
 #endif
 
-#if defined(SUPLA_PUSHOVER)
-    if (nr_relay.toInt() <= MAX_PUSHOVER_MESSAGE) {
-      addFormHeader(webContentBuffer, S_PUSHOVER);
-
-      massage = ConfigManager->get(KEY_PUSHOVER_MASSAGE)->getElement(nr_relay.toInt()).c_str();
-      addTextBox(webContentBuffer, INPUT_PUSHOVER_MESSAGE, S_MESSAGE, massage, 0, MAX_MESSAGE_SIZE, false);
-      addFormHeaderEnd(webContentBuffer);
-    }
-#endif
-
 #if defined(SUPLA_DIRECT_LINKS)
     directLinksWebPage(nr_relay.toInt());
-#endif
-
-#ifdef SUPLA_CONDITIONS
-    conditionsWebPage(nr_relay.toInt());
 #endif
 
     addButtonSubmit(webContentBuffer, S_SAVE);
@@ -333,9 +308,9 @@ void handleRelaySetMCP23017(int save) {
   nr_relay = WebServer->httpServer->arg(ARG_PARM_NUMBER);
 
   if (!nr_relay.isEmpty())
-    gpio = ConfigESP->getGpioMCP23017(nr_relay.toInt(), FUNCTION_RELAY);
+    gpio = Expander->getGpioExpander(nr_relay.toInt(), FUNCTION_RELAY);
   else
-    gpio = ConfigESP->getGpioMCP23017(0, FUNCTION_RELAY);
+    gpio = Expander->getGpioExpander(0, FUNCTION_RELAY);
 
   WebServer->sendHeaderStart();
   webContentBuffer += SuplaSaveResult(save);
@@ -359,25 +334,9 @@ void handleRelaySetMCP23017(int save) {
   addListBox(webContentBuffer, input, S_REACTION_AFTER_RESET, MEMORY_P, 3, selected);
   addFormHeaderEnd(webContentBuffer);
 
-#ifdef SUPLA_PUSHOVER
-  if (!nr_relay.isEmpty()) {
-    if (nr_relay.toInt() <= MAX_PUSHOVER_MESSAGE) {
-      addFormHeader(webContentBuffer, S_PUSHOVER);
-
-      massage = ConfigManager->get(KEY_PUSHOVER_MASSAGE)->getElement(nr_relay.toInt()).c_str();
-      addTextBox(webContentBuffer, INPUT_PUSHOVER_MESSAGE, S_MESSAGE, massage, 0, MAX_MESSAGE_SIZE, false);
-      addFormHeaderEnd(webContentBuffer);
-    }
-  }
-#endif
-
   if (!nr_relay.isEmpty()) {
 #if defined(SUPLA_DIRECT_LINKS)
     directLinksWebPage(nr_relay.toInt());
-#endif
-
-#ifdef SUPLA_CONDITIONS
-    conditionsWebPage(nr_relay.toInt());
 #endif
   }
 
@@ -408,25 +367,14 @@ void handleRelaySaveSetMCP23017() {
   nr_relay = WebServer->httpServer->arg(ARG_PARM_NUMBER);
 
   if (!nr_relay.isEmpty()) {
-    gpio = ConfigESP->getGpioMCP23017(nr_relay.toInt(), FUNCTION_RELAY);
+    gpio = Expander->getGpioExpander(nr_relay.toInt(), FUNCTION_RELAY);
     key = KEY_GPIO + gpio;
 
     ConfigManager->setElement(key, MEMORY, memory);
     ConfigManager->setElement(key, LEVEL_RELAY, level);
 
-#if defined(SUPLA_PUSHOVER)
-    if (nr_relay.toInt() <= MAX_PUSHOVER_MESSAGE) {
-      input = INPUT_PUSHOVER_MESSAGE;
-      ConfigManager->setElement(KEY_PUSHOVER_MASSAGE, (nr_relay.toInt()), WebServer->httpServer->arg(input).c_str());
-    }
-#endif
-
 #if defined(SUPLA_DIRECT_LINKS)
     directLinksWebPageSave(nr_relay.toInt());
-#endif
-
-#ifdef SUPLA_CONDITIONS
-    conditionsWebPageSave(nr_relay.toInt());
 #endif
   }
   else {
@@ -445,42 +393,6 @@ void handleRelaySaveSetMCP23017() {
       handleRelaySetMCP23017(2);
       break;
   }
-}
-#endif
-
-#ifdef SUPLA_CONDITIONS
-void conditionsWebPage(int nr) {
-  if (COUNT_SENSOR_LIST > 1) {
-    addFormHeader(webContentBuffer, S_CONDITIONING);
-
-    uint8_t selected = ConfigManager->get(KEY_CONDITIONS_SENSOR_TYPE)->getElement(nr).toInt();
-    addListBox(webContentBuffer, INPUT_CONDITIONS_SENSOR_TYPE, S_TYPE, SENSOR_LIST_P, COUNT_SENSOR_LIST, selected);
-
-    selected = ConfigManager->get(KEY_CONDITIONS_SENSOR_NUMBER)->getElement(nr).toInt();
-    addListNumbersBox(webContentBuffer, INPUT_CONDITIONS_SENSOR_NUMBER, S_SENSOR, 20, selected);
-
-    selected = ConfigManager->get(KEY_CONDITIONS_TYPE)->getElement(nr).toInt();
-    addListBox(webContentBuffer, INPUT_CONDITIONS_TYPE, S_CONDITION, CONDITIONS_TYPE_P, CONDITION_COUNT, selected);
-
-    String value = ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr);
-    addNumberBox(webContentBuffer, INPUT_CONDITIONS_MIN, "ON", S_SWITCH_ON_VALUE, false, value);
-    value = ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr);
-    addNumberBox(webContentBuffer, INPUT_CONDITIONS_MAX, "OFF", S_SWITCH_OFF_VALUE, false, value);
-    addFormHeaderEnd(webContentBuffer);
-  }
-}
-
-void conditionsWebPageSave(int nr) {
-  String input = INPUT_CONDITIONS_SENSOR_TYPE;
-  ConfigManager->setElement(KEY_CONDITIONS_SENSOR_TYPE, nr, WebServer->httpServer->arg(input).toInt());
-  input = INPUT_CONDITIONS_TYPE;
-  ConfigManager->setElement(KEY_CONDITIONS_TYPE, nr, WebServer->httpServer->arg(input).toInt());
-  input = INPUT_CONDITIONS_MIN;
-  ConfigManager->setElement(KEY_CONDITIONS_MIN, nr, WebServer->httpServer->arg(input).c_str());
-  input = INPUT_CONDITIONS_MAX;
-  ConfigManager->setElement(KEY_CONDITIONS_MAX, nr, WebServer->httpServer->arg(input).c_str());
-  input = INPUT_CONDITIONS_SENSOR_NUMBER;
-  ConfigManager->setElement(KEY_CONDITIONS_SENSOR_NUMBER, nr, WebServer->httpServer->arg(input).c_str());
 }
 #endif
 

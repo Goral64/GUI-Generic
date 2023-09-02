@@ -5,28 +5,49 @@
  modify it under the terms of the GNU General Public License
  as published by the Free Software Foundation; either version 2
  of the License, or (at your option) any later version.
+
  This program is distributed in the hope that it will be useful,
  but WITHOUT ANY WARRANTY; without even the implied warranty of
  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  GNU General Public License for more details.
+
  You should have received a copy of the GNU General Public License
  along with this program; if not, write to the Free Software
  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#ifndef _electricity_meter_h
-#define _electricity_meter_h
+#ifndef SRC_SUPLA_SENSOR_ELECTRICITY_METER_H_
+#define SRC_SUPLA_SENSOR_ELECTRICITY_METER_H_
+
+#include <supla-common/srpc.h>
+#include <supla/action_handler.h>
 
 #include "../channel_extended.h"
 #include "../element.h"
 #include "../local_action.h"
-#include <supla-common/srpc.h>
 
 #define MAX_PHASES 3
 
 namespace Supla {
 namespace Sensor {
-class ElectricityMeter : public Element, public LocalAction {
+
+#pragma pack(push, 1)
+struct EnergyMeasurmentsStorage {
+  _supla_int64_t totalFwdActEnergy = 0;
+  _supla_int64_t totalRvrActEnergy = 0;
+  _supla_int64_t totalFwdReactEnergy = 0;
+  _supla_int64_t totalRvrReactEnergy = 0;
+};
+#pragma pack(pop)
+
+#define EM_VAR_ALL_ENERGY_REGISTERS                                  \
+  (EM_VAR_FORWARD_ACTIVE_ENERGY | EM_VAR_REVERSE_ACTIVE_ENERGY |     \
+  EM_VAR_FORWARD_REACTIVE_ENERGY | EM_VAR_REVERSE_REACTIVE_ENERGY |  \
+  EM_VAR_FORWARD_ACTIVE_ENERGY_BALANCED |                            \
+  EM_VAR_REVERSE_ACTIVE_ENERGY_BALANCED)
+
+class ElectricityMeter :
+  public Element, public LocalAction, public ActionHandler {
  public:
   ElectricityMeter();
 
@@ -104,6 +125,102 @@ class ElectricityMeter : public Element, public LocalAction {
   // phase angle 1 == 0.1 degree
   _supla_int_t getPhaseAngle(int phase);
 
+  // energy 1 == 0.00001 kWh
+  static unsigned _supla_int64_t
+    getFwdActEnergy(const TElectricityMeter_ExtendedValue_V2 &emValue,
+        int phase);
+
+  // energy 1 == 0.00001 kWh
+  static unsigned _supla_int64_t
+    getTotalFwdActEnergy(const TElectricityMeter_ExtendedValue_V2 &emValue);
+
+  // energy 1 == 0.00001 kWh
+  static unsigned _supla_int64_t
+    getRvrActEnergy(const TElectricityMeter_ExtendedValue_V2 &emValue,
+        int phase);
+
+  // energy 1 == 0.00001 kWh
+  static unsigned _supla_int64_t
+    getTotalRvrActEnergy(const TElectricityMeter_ExtendedValue_V2 &emValue);
+
+  // energy 1 == 0.00001 kWh
+  static unsigned _supla_int64_t
+    getFwdReactEnergy(const TElectricityMeter_ExtendedValue_V2 &emValue,
+        int phase);
+
+  // energy 1 == 0.00001 kWh
+  static unsigned _supla_int64_t
+    getRvrReactEnergy(const TElectricityMeter_ExtendedValue_V2 &emValue,
+        int phase);
+
+  // voltage 1 == 0.01 V
+  static unsigned _supla_int16_t
+    getVoltage(const TElectricityMeter_ExtendedValue_V2 &emValue, int phase);
+
+  // current 1 == 0.001 A
+  static unsigned _supla_int_t
+    getCurrent(const TElectricityMeter_ExtendedValue_V2 &emValue, int phase);
+
+  // Frequency 1 == 0.01 Hz
+  static unsigned _supla_int16_t
+    getFreq(const TElectricityMeter_ExtendedValue_V2 &emValue);
+
+  // power 1 == 0.00001 W
+  static _supla_int_t getPowerActive(
+      const TElectricityMeter_ExtendedValue_V2 &emValue, int phase);
+
+  // power 1 == 0.00001 var
+  static _supla_int_t getPowerReactive(
+      const TElectricityMeter_ExtendedValue_V2 &emValue, int phase);
+
+  // power 1 == 0.00001 VA
+  static _supla_int_t getPowerApparent(
+      const TElectricityMeter_ExtendedValue_V2 &emValue, int phase);
+
+  // power 1 == 0.001
+  static _supla_int_t getPowerFactor(
+      const TElectricityMeter_ExtendedValue_V2 &emValue, int phase);
+
+  // phase angle 1 == 0.1 degree
+  static _supla_int_t getPhaseAngle(
+      const TElectricityMeter_ExtendedValue_V2 &emValue, int phase);
+
+  static bool isFwdActEnergyUsed(
+    const TElectricityMeter_ExtendedValue_V2 &emValue);
+
+  static bool isRvrActEnergyUsed(
+      const TElectricityMeter_ExtendedValue_V2 &emValue);
+
+  static bool isFwdReactEnergyUsed(
+      const TElectricityMeter_ExtendedValue_V2 &emValue);
+
+  static bool isRvrReactEnergyUsed(
+      const TElectricityMeter_ExtendedValue_V2 &emValue);
+
+  static bool isVoltageUsed(
+      const TElectricityMeter_ExtendedValue_V2 &emValue);
+
+  static bool isCurrentUsed(
+      const TElectricityMeter_ExtendedValue_V2 &emValue);
+
+  static bool isFreqUsed(
+      const TElectricityMeter_ExtendedValue_V2 &emValue);
+
+  static bool isPowerActiveUsed(
+      const TElectricityMeter_ExtendedValue_V2 &emValue);
+
+  static bool isPowerReactiveUsed(
+      const TElectricityMeter_ExtendedValue_V2 &emValue);
+
+  static bool isPowerApparentUsed(
+      const TElectricityMeter_ExtendedValue_V2 &emValue);
+
+  static bool isPowerFactorUsed(
+      const TElectricityMeter_ExtendedValue_V2 &emValue);
+
+  static bool isPhaseAngleUsed(
+      const TElectricityMeter_ExtendedValue_V2 &emValue);
+
   void resetReadParameters();
 
   // Please implement this class for reading value from elecricity meter device.
@@ -125,12 +242,23 @@ class ElectricityMeter : public Element, public LocalAction {
   // counter back to 0 kWh
   virtual void resetStorage();
 
+  // default calcfg implementation allows to resetStorage remotely.
+  // If you override it please remember to implement this functionality
+  // or call this method from base classs.
+  int handleCalcfgFromServer(TSD_DeviceCalCfgRequest *request) override;
+
+  void handleAction(int event, int action) override;
+
   void setRefreshRate(unsigned int sec);
 
   Channel *getChannel() override;
 
-  virtual void addAction(int action, ActionHandler &client, Supla::Condition *condition);
-  virtual void addAction(int action, ActionHandler *client, Supla::Condition *condition);
+  virtual void addAction(int action,
+                         ActionHandler &client,  // NOLINT(runtime/references)
+                         Supla::Condition *condition);
+  virtual void addAction(int action,
+                         ActionHandler *client,
+                         Supla::Condition *condition);
 
  protected:
   TElectricityMeter_ExtendedValue_V2 emValue;
@@ -138,12 +266,11 @@ class ElectricityMeter : public Element, public LocalAction {
   unsigned _supla_int_t rawCurrent[MAX_PHASES];
   bool valueChanged;
   bool currentMeasurementAvailable;
-  unsigned long lastReadTime;
+  uint32_t lastReadTime;
   unsigned int refreshRateSec;
 };
 
 };  // namespace Sensor
 };  // namespace Supla
 
-#endif
-
+#endif  // SRC_SUPLA_SENSOR_ELECTRICITY_METER_H_

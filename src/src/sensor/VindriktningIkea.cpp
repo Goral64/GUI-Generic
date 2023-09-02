@@ -14,22 +14,24 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-//https://github.com/Hypfer/esp8266-vindriktning-particle-sensor
+// https://github.com/Hypfer/esp8266-vindriktning-particle-sensor
 
 #include "VindriktningIkea.h"
 
 namespace Supla {
 namespace Sensor {
+#ifdef ARDUINO_ARCH_ESP32
+VindriktningIkea::VindriktningIkea(HardwareSerial& serial) {
+  _serial = &serial;
+  _serial->begin(VINDRIKTNING_IKEA_BAUDRATE);
+}
+#else
 VindriktningIkea::VindriktningIkea(int8_t _pin_rx) {
-#ifdef ARDUINO_ARCH_ESP8266
   _serial = new SoftwareSerial(_pin_rx);
   _serial->enableIntTx(false);
   _serial->begin(VINDRIKTNING_IKEA_BAUDRATE);
-#elif ARDUINO_ARCH_ESP32
-  _serial = new HardwareSerial(_pin_rx);
-  _serial->begin(VINDRIKTNING_IKEA_BAUDRATE);
-#endif
 }
+#endif
 
 double VindriktningIkea::getValue() {
   double value = TEMPERATURE_NOT_AVAILABLE;
@@ -82,7 +84,7 @@ void VindriktningIkea::parseState(particleSensorState_t& state) {
     state.avgPM25 = avgPM25;
     state.valid = true;
 
-    Serial.printf("New Avg PM25: %d\n", state.avgPM25);
+    Serial.printf("New Avg PM25: %f\n", state.avgPM25);
   }
 
   clearRxBuf();
@@ -138,7 +140,7 @@ void VindriktningIkea::handleUart(particleSensorState_t& state) {
   if (isValidHeader() && isValidChecksum()) {
     parseState(state);
 
-    Serial.printf("Current measurements: %d, %d, %d, %d, %d\n", state.measurements[0], state.measurements[1], state.measurements[2],
+    Serial.printf("Current measurements: %f, %f, %f, %f, %f\n", state.measurements[0], state.measurements[1], state.measurements[2],
                   state.measurements[3], state.measurements[4]);
   }
   else {

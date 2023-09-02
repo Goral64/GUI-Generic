@@ -32,35 +32,39 @@ void begin() {
   SuplaDevice.setName(ConfigManager->get(KEY_HOST_NAME)->getValue());
 
 #ifdef BUILD_VERSION
-  SuplaDevice.setSwVersion(BUILD_VERSION);
+  String ver = "GG v" + String(BUILD_VERSION);
+  ver.reserve(16);
+  SuplaDevice.setSwVersion(ver.c_str());
 #endif
 
   String server = ConfigManager->get(KEY_SUPLA_SERVER)->getValue();
   auto npos = server.indexOf(":");
   String suplaServer = server.substring(0, npos);
 
+  SuplaDevice.addFlags(SUPLA_DEVICE_FLAG_CALCFG_ENTER_CFG_MODE);
+
   SuplaDevice.begin((char *)ConfigManager->get(KEY_SUPLA_GUID)->getValue(),      // Global Unique Identifier
                     suplaServer.c_str(),                                         // SUPLA server address
                     ConfigManager->get(KEY_SUPLA_EMAIL)->getValue(),             // Email address used to login to Supla Cloud
                     (char *)ConfigManager->get(KEY_SUPLA_AUTHKEY)->getValue());  // Authorization key
 
-  if (getCountChannels() == 0)
-    ConfigESP->configModeInit(WIFI_AP_STA);
+  if (ConfigESP->configModeESP == Supla::DEVICE_MODE_CONFIG)
+    Supla::Network::SetConfigMode();
 
-  if (ConfigManager->get(KEY_ENABLE_GUI)->getValueInt())
-    crateWebServer();
+  if (getCountChannels() == 0)
+    ConfigESP->configModeInit();
 }
 
 void setupConnection() {
 #ifdef SUPLA_WT32_ETH01_LAN8720
   if (eth == nullptr) {
-    eth = new Supla::WT32_ETH01(1);  // uint_t ETH_ADDR = I²C-address of Ethernet PHY (0 or 1)
+    eth = new Supla::GUI_WT32_ETH01(1);  // uint_t ETH_ADDR = I²C-address of Ethernet PHY (0 or 1)
   }
 #else
   if (wifi) {
     wifi->setSsid(ConfigManager->get(KEY_WIFI_SSID)->getValue());
     wifi->setPassword(ConfigManager->get(KEY_WIFI_PASS)->getValue());
-    Supla::Network::Setup();
+    SuplaDevice.enableNetwork();
   }
   else {
     wifi = new Supla::GUIESPWifi(ConfigManager->get(KEY_WIFI_SSID)->getValue(), ConfigManager->get(KEY_WIFI_PASS)->getValue());
@@ -77,17 +81,17 @@ void enableConnectionSSL(bool value) {
 #ifdef SUPLA_WT32_ETH01_LAN8720
 
   if (eth) {
-    if (ConfigESP->configModeESP == CONFIG_MODE) {
-      eth->enableSSL(false);
+    if (ConfigESP->configModeESP == Supla::DEVICE_MODE_CONFIG) {
+      eth->setSSLEnabled(false);
     }
     else {
-      eth->enableSSL(value);
+      eth->setSSLEnabled(value);
     }
   }
 
 #else
   if (wifi) {
-    if (ConfigESP->configModeESP == CONFIG_MODE) {
+    if (ConfigESP->configModeESP == Supla::DEVICE_MODE_CONFIG) {
       wifi->enableSSL(false);
     }
     else {
@@ -100,8 +104,8 @@ void enableConnectionSSL(bool value) {
 void crateWebServer() {
   if (WebServer == NULL) {
     WebServer = new SuplaWebServer();
-    WebServer->begin();
   }
+  WebServer->begin();
 }
 
 #ifdef SUPLA_RELAY
@@ -119,8 +123,13 @@ void addRelay(uint8_t nr) {
     }
     else {
       highIsOn = ConfigESP->getLevel(pinRelay);
-      relay.push_back(new Supla::Control::Relay(pinRelay, highIsOn));
+      relay.push_back(Supla::Control::GUI::Relay(pinRelay, highIsOn, nr));
     }
+
+#ifdef SUPLA_CONDITIONS
+    Supla::GUI::Conditions::addConditionsExecutive(CONDITIONS::EXECUTIVE_RELAY, S_RELAY, relay[nr], nr);
+    Supla::GUI::Conditions::addConditionsSensor(SENSOR_RELAY, S_RELAY, relay[nr], nr);
+#endif
 
     switch (ConfigESP->getMemory(pinRelay, nr)) {
       case MEMORY_OFF:
@@ -148,39 +157,77 @@ void addRelay(uint8_t nr) {
 }
 
 void addButtonToRelay(uint8_t nrRelay) {
-  uint8_t pinButton, nrButton, pinRelay;
+  uint8_t pinButton, nrButton, pinRelay, buttonAction, buttonEvent;
 
   for (uint8_t nr = 0; nr < ConfigManager->get(KEY_MAX_BUTTON)->getValueInt(); nr++) {
     nrButton = ConfigESP->getNumberButton(nr);
     pinButton = ConfigESP->getGpio(nr, FUNCTION_BUTTON);
     pinRelay = ConfigESP->getGpio(nrButton, FUNCTION_RELAY);
+    buttonAction = ConfigESP->getActionInternal(pinButton);
+    buttonEvent = ConfigESP->getEvent(pinButton);
 
     if (pinButton != OFF_GPIO && pinRelay != OFF_GPIO && nrRelay == nrButton) {
-      Supla::Control::Button *button;
+      Supla::Control::Button *button = nullptr;
 
 #ifdef ARDUINO_ARCH_ESP8266
       if (pinButton == A0) {
         button = new Supla::Control::ButtonAnalog(A0, ConfigManager->get(KEY_ANALOG_INPUT_EXPECTED)->getElement(nr).toInt());
       }
-      else {
-        button = new Supla::Control::Button(pinButton, ConfigESP->getPullUp(pinButton), ConfigESP->getInversed(pinButton));
-        button->setSwNoiseFilterDelay(50);
-      }
-#else
-    button = new Supla::Control::Button(pinButton, ConfigESP->getPullUp(pinButton), ConfigESP->getInversed(pinButton));
-    button->setSwNoiseFilterDelay(50);
 #endif
-
-      if (ConfigESP->getEvent(pinButton) == Supla::ON_HOLD) {
-        int holdTimeMs = String(ConfigManager->get(KEY_AT_HOLD_TIME)->getValue()).toDouble() * 1000;
-        button->setHoldTime(holdTimeMs);
-        button->repeatOnHoldEvery(2000);
+      if (button == nullptr) {
+        button = Supla::Control::GUI::Button(pinButton, ConfigESP->getPullUp(pinButton), ConfigESP->getInversed(pinButton), nrButton);
       }
+      button->setSwNoiseFilterDelay(50);
 
-      button->addAction(ConfigESP->getAction(pinButton), relay[nrButton], ConfigESP->getEvent(pinButton));
+      switch (buttonEvent) {
+          // case Supla::Event::ON_PRESS:
+          //   button->setButtonType(Supla::Control::Button::ButtonType::MONOSTABLE);
+          //   relay[nrButton]->attach(button);
+          //   break;
+
+          // case Supla::Event::ON_RELEASE:
+          //   button->addAction(buttonAction, relay[nrButton], buttonEvent);
+          //   break;
+
+          // case Supla::Event::ON_CHANGE:
+          //   button->setButtonType(Supla::Control::Button::ButtonType::BISTABLE);
+          //   relay[nrButton]->attach(button);
+          //   break;
+
+        case Supla::GUI::Event::ON_MOTION_SENSOR:
+          button->setButtonType(Supla::Control::Button::ButtonType::MOTION_SENSOR);
+          relay[nrButton]->attach(button);
+          break;
+
+        case Supla::GUI::Event::ON_HOLD:
+          button->setHoldTime(ConfigManager->get(KEY_AT_HOLD_TIME)->getValueFloat() * 1000);
+          button->addAction(buttonAction, relay[nrButton], Supla::Event::ON_HOLD);
+          break;
+
+        default:
+          if (ConfigESP->getAction(pinButton) == Supla::GUI::Action::AUTOMATIC_STAIRCASE) {
+            if (buttonEvent == Supla::GUI::Event::ON_CHANGE) {
+              button->setMulticlickTime(ConfigManager->get(KEY_AT_MULTICLICK_TIME)->getValueFloat() * 1000, true);
+
+              button->addAction(Supla::Action::TOGGLE, relay[nrButton], Supla::Event::ON_CLICK_1);
+              button->addAction(Supla::Action::TURN_ON_WITHOUT_TIMER, relay[nrButton], Supla::Event::ON_CLICK_2);
+            }
+            else {
+              button->setMulticlickTime(ConfigManager->get(KEY_AT_MULTICLICK_TIME)->getValueFloat() * 1000);
+              button->setHoldTime(ConfigManager->get(KEY_AT_HOLD_TIME)->getValueFloat() * 1000);
+
+              button->addAction(Supla::Action::TOGGLE, relay[nrButton], Supla::Event::ON_CLICK_1);
+              button->addAction(Supla::Action::TURN_ON_WITHOUT_TIMER, relay[nrButton], Supla::Event::ON_HOLD);
+            }
+          }
+          else {
+            button->addAction(buttonAction, relay[nrButton], buttonEvent);
+          }
+          break;
+      }
 
 #ifdef SUPLA_ACTION_TRIGGER
-      addActionTriggerRelatedChannel(button, ConfigESP->getEvent(pinButton), relay[nrButton]);
+      addActionTriggerRelatedChannel(nrButton, button, ConfigESP->getEvent(pinButton), relay[nrButton]);
 #endif
     }
     delay(0);
@@ -189,43 +236,14 @@ void addButtonToRelay(uint8_t nrRelay) {
 #endif
 
 #ifdef SUPLA_ACTION_TRIGGER
-void addButtonActionTrigger(uint8_t nr) {
-  uint8_t nrButton, pinButton, pinRelay;
+ActionTrigger *actionTrigger = nullptr;
 
-  nrButton = ConfigESP->getNumberButton(nr);
-  pinButton = ConfigESP->getGpio(nr, FUNCTION_BUTTON);
-  pinRelay = ConfigESP->getGpio(nrButton, FUNCTION_RELAY);
-
-  if (pinButton != OFF_GPIO && pinRelay == OFF_GPIO) {
-    auto button = new Supla::Control::Button(pinButton, ConfigESP->getPullUp(pinButton), ConfigESP->getInversed(pinButton));
-    button->setSwNoiseFilterDelay(50);
-    auto at = new Supla::Control::ActionTrigger();
-
-    button->addAction(ConfigESP->getAction(pinButton), at, ConfigESP->getEvent(pinButton));
-
-    int muliclickTimeMs = String(ConfigManager->get(KEY_AT_MULTICLICK_TIME)->getValue()).toDouble() * 1000;
-    int holdTimeMs = String(ConfigManager->get(KEY_AT_HOLD_TIME)->getValue()).toDouble() * 1000;
-
-    if (ConfigESP->getEvent(pinButton) == Supla::ON_CHANGE) {
-      button->setMulticlickTime(muliclickTimeMs, true);
-    }
-    else {
-      button->setMulticlickTime(muliclickTimeMs);
-      button->setHoldTime(holdTimeMs);
-    }
-
-    at->attach(button);
-  }
-}
-#endif
-
-#ifdef SUPLA_ACTION_TRIGGER
-void addActionTriggerRelatedChannel(Supla::Control::Button *button, int eventButton, Supla::Element *element) {
+void addActionTriggerRelatedChannel(uint8_t nr, Supla::Control::Button *button, int eventButton, Supla::Element *element) {
   button->setSwNoiseFilterDelay(50);
   auto at = new Supla::Control::ActionTrigger();
 
-  int muliclickTimeMs = String(ConfigManager->get(KEY_AT_MULTICLICK_TIME)->getValue()).toDouble() * 1000;
-  int holdTimeMs = String(ConfigManager->get(KEY_AT_HOLD_TIME)->getValue()).toDouble() * 1000;
+  int muliclickTimeMs = ConfigManager->get(KEY_AT_MULTICLICK_TIME)->getValueFloat() * 1000;
+  int holdTimeMs = ConfigManager->get(KEY_AT_HOLD_TIME)->getValueFloat() * 1000;
 
   if (eventButton == Supla::ON_CHANGE) {
     button->setMulticlickTime(muliclickTimeMs, true);
@@ -238,6 +256,43 @@ void addActionTriggerRelatedChannel(Supla::Control::Button *button, int eventBut
     at->setRelatedChannel(element);
   }
   at->attach(button);
+
+  actionTrigger[nr].active = true;
+}
+
+void addButtonActionTrigger(uint8_t nr) {
+  uint8_t pinButton = ConfigESP->getGpio(nr, FUNCTION_BUTTON);
+
+  if (pinButton != OFF_GPIO && !actionTrigger[nr].active) {
+    auto button = Supla::Control::GUI::Button(pinButton, ConfigESP->getPullUp(pinButton), ConfigESP->getInversed(pinButton), nr);
+    button->setSwNoiseFilterDelay(50);
+    auto at = new Supla::Control::ActionTrigger();
+
+    button->addAction(ConfigESP->getActionInternal(pinButton), at, ConfigESP->getEvent(pinButton));
+
+    int muliclickTimeMs = ConfigManager->get(KEY_AT_MULTICLICK_TIME)->getValueFloat() * 1000;
+    int holdTimeMs = ConfigManager->get(KEY_AT_HOLD_TIME)->getValueFloat() * 1000;
+
+    if (ConfigESP->getEvent(pinButton) == Supla::ON_CHANGE) {
+      button->setMulticlickTime(muliclickTimeMs, true);
+    }
+    else {
+      button->setMulticlickTime(muliclickTimeMs);
+      button->setHoldTime(holdTimeMs);
+    }
+
+    at->attach(button);
+  }
+}
+
+int calculateElementCountActionTrigger() {
+  int maxButtonValue = ConfigManager->get(KEY_MAX_BUTTON)->getValueInt();
+
+#ifdef SUPLA_RF_BRIDGE
+  return maxButtonValue + MAX_BRIDGE_RF;
+#else
+  return maxButtonValue;
+#endif
 }
 #endif
 
@@ -311,27 +366,50 @@ void addButtonBridge(uint8_t nr) {
 
   if (pinButton != OFF_GPIO) {
     auto receiveBridge = new Supla::Control::RFBridgeReceive(pinButton);
+
     receiveBridge->setCodeON(ConfigManager->get(KEY_RF_BRIDGE_CODE_ON)->getElement(nr).toInt());
     receiveBridge->setCodeOFF(ConfigManager->get(KEY_RF_BRIDGE_CODE_OFF)->getElement(nr).toInt());
 
-    receiveBridge->addAction(Supla::TURN_ON, relay[nr], Supla::TURN_ON);
-    receiveBridge->addAction(Supla::TURN_OFF, relay[nr], Supla::TURN_OFF);
+    if (strcmp(ConfigManager->get(KEY_RF_BRIDGE_CODE_ON)->getElement(nr).c_str(),
+               ConfigManager->get(KEY_RF_BRIDGE_CODE_OFF)->getElement(nr).c_str()) != 0 &&
+        strcmp(ConfigManager->get(KEY_RF_BRIDGE_CODE_ON)->getElement(nr).c_str(), "") != 0 &&
+        strcmp(ConfigManager->get(KEY_RF_BRIDGE_CODE_OFF)->getElement(nr).c_str(), "") != 0) {
+      receiveBridge->addAction(Supla::TURN_ON, relay[nr], Supla::ON_PRESS);
+      receiveBridge->addAction(Supla::TURN_OFF, relay[nr], Supla::ON_RELEASE);
+#ifdef SUPLA_ACTION_TRIGGER
+      addActionTriggerRelatedChannel(nr, receiveBridge, Supla::ON_CHANGE, relay[nr]);
+#endif
+    }
+    else {
+      receiveBridge->addAction(Supla::TOGGLE, relay[nr], Supla::ON_PRESS);
+      receiveBridge->isMonostable();
+#ifdef SUPLA_ACTION_TRIGGER
+      addActionTriggerRelatedChannel(nr, receiveBridge, Supla::ON_PRESS, relay[nr]);
+#endif
+    }
   }
 }
 #endif
 
-#if defined(SUPLA_PUSHOVER)
+#ifdef SUPLA_PUSHOVER
 void addPushover(uint8_t nr) {
-  if (nr <= MAX_PUSHOVER_MESSAGE) {
-    if (strcmp(ConfigManager->get(KEY_PUSHOVER_MASSAGE)->getElement(nr).c_str(), "") != 0 &&
-        strcmp(ConfigManager->get(KEY_PUSHOVER_TOKEN)->getValue(), "") != 0 && strcmp(ConfigManager->get(KEY_PUSHOVER_USER)->getValue(), "") != 0) {
-      auto pushover =
-          new Supla::Control::Pushover(ConfigManager->get(KEY_PUSHOVER_TOKEN)->getValue(), ConfigManager->get(KEY_PUSHOVER_USER)->getValue(), true);
+  if (strcmp(ConfigManager->get(KEY_PUSHOVER_MASSAGE)->getElement(nr).c_str(), "") != 0 &&
+      strcmp(ConfigManager->get(KEY_PUSHOVER_TOKEN)->getValue(), "") != 0 && strcmp(ConfigManager->get(KEY_PUSHOVER_USER)->getValue(), "") != 0) {
+    auto pushover =
+        new Supla::Control::Pushover(ConfigManager->get(KEY_PUSHOVER_TOKEN)->getValue(), ConfigManager->get(KEY_PUSHOVER_USER)->getValue(), true);
 
-      pushover->setTitle(ConfigManager->get(KEY_HOST_NAME)->getValue());
-      pushover->setMessage(ConfigManager->get(KEY_PUSHOVER_MASSAGE)->getElement(nr).c_str());
-      relay[nr]->addAction(Pushover::SEND_NOTIF_1, pushover, Supla::ON_TURN_ON);
-    }
+    String title = ConfigManager->get(KEY_HOST_NAME)->getValue();
+
+    // if (title.indexOf(" ", title.length() - 1) == -1) {
+    //   title = String(ConfigManager->get(KEY_HOST_NAME)->getValue()) + S_SPACE + "-" + S_SPACE + name + S_SPACE + (nr + 1);
+    // }
+
+    pushover->setTitle(title.c_str());
+    pushover->setMessage(ConfigManager->get(KEY_PUSHOVER_MASSAGE)->getElement(nr).c_str());
+    pushover->setSound(ConfigManager->get(KEY_PUSHOVER_SOUND)->getElement(nr).toInt());
+#ifdef SUPLA_CONDITIONS
+    Supla::GUI::Conditions::addConditionsExecutive(CONDITIONS::EXECUTIVE_PUSHOVER, S_PUSHOVER, pushover, nr);
+#endif
   }
 }
 #endif
@@ -363,14 +441,17 @@ void addDS18B20MultiThermometer(int pinNumber) {
       sensorDS.push_back(new DS18B20(pinNumber, HexToBytes(ConfigManager->get(KEY_ADDR_DS18B20)->getElement(i))));
       supla_log(LOG_DEBUG, "Index %d - address %s", i, ConfigManager->get(KEY_ADDR_DS18B20)->getElement(i).c_str());
 
-      Supla::GUI::addConditionsTurnON(SENSOR_DS18B20, sensorDS[i], i);
-      Supla::GUI::addConditionsTurnOFF(SENSOR_DS18B20, sensorDS[i], i);
+#ifdef SUPLA_CONDITIONS
+      Supla::GUI::Conditions::addConditionsSensor(SENSOR_DS18B20, S_DS18B20, sensorDS[i], i);
+#endif
     }
   }
   else {
     sensorDS.push_back(new DS18B20(ConfigESP->getGpio(FUNCTION_DS18B20)));
-    Supla::GUI::addConditionsTurnON(SENSOR_DS18B20, sensorDS[0]);
-    Supla::GUI::addConditionsTurnOFF(SENSOR_DS18B20, sensorDS[0]);
+
+#ifdef SUPLA_CONDITIONS
+    Supla::GUI::Conditions::addConditionsSensor(SENSOR_DS18B20, S_DS18B20, sensorDS[0]);
+#endif
   }
 }
 #endif
@@ -432,43 +513,47 @@ void addRolleShutter(uint8_t nr) {
       break;
   }
 
-  auto RollerShutterRelay = new Supla::Control::RollerShutter(pinRelayUp, pinRelayDown, highIsOn);
+  auto rollerShutterRelay = Supla::Control::GUI::RollerShutter(pinRelayUp, pinRelayDown, highIsOn, nr);
 
-  if (pinButtonUp != OFF_GPIO && actionButtonUp == Supla::Action::STEP_BY_STEP) {
-    auto RollerShutterButtonOpen = new Supla::Control::Button(pinButtonUp, pullupButtonUp, inversedButtonUp);
-#ifdef SUPLA_ACTION_TRIGGER
-    addActionTriggerRelatedChannel(RollerShutterButtonOpen, eventButtonUp, RollerShutterRelay);
+#ifdef SUPLA_CONDITIONS
+  Supla::GUI::Conditions::addConditionsExecutive(CONDITIONS::EXECUTIVE_ROLLER_SHUTTER, S_ROLLERSHUTTERS, rollerShutterRelay, nr);
 #endif
 
-    RollerShutterButtonOpen->addAction(actionButtonUp, RollerShutterRelay, eventButtonUp);
+  if (pinButtonUp != OFF_GPIO && actionButtonUp == Supla::Action::STEP_BY_STEP) {
+    auto rollerShutterButtonOpen = Supla::Control::GUI::Button(pinButtonUp, pullupButtonUp, inversedButtonUp, nr);
+#ifdef SUPLA_ACTION_TRIGGER
+    addActionTriggerRelatedChannel(nr, rollerShutterButtonOpen, eventButtonUp, rollerShutterRelay);
+#endif
+
+    rollerShutterButtonOpen->addAction(actionButtonUp, rollerShutterRelay, eventButtonUp);
   }
   else if (pinButtonUp != OFF_GPIO && pinButtonDown != OFF_GPIO) {
-    auto RollerShutterButtonOpen = new Supla::Control::Button(pinButtonUp, pullupButtonUp, inversedButtonUp);
-    auto RollerShutterButtonClose = new Supla::Control::Button(pinButtonDown, pullupButtonDown, inversedButtonDown);
+    auto rollerShutterButtonOpen = Supla::Control::GUI::Button(pinButtonUp, pullupButtonUp, inversedButtonUp, nr);
+    auto rollerShutterButtonClose = Supla::Control::GUI::Button(pinButtonDown, pullupButtonDown, inversedButtonDown, nr);
 
 #ifdef SUPLA_ACTION_TRIGGER
-    addActionTriggerRelatedChannel(RollerShutterButtonOpen, eventButtonUp, RollerShutterRelay);
-    addActionTriggerRelatedChannel(RollerShutterButtonClose, eventButtonUp, RollerShutterRelay);
+    addActionTriggerRelatedChannel(nr, rollerShutterButtonOpen, eventButtonUp, rollerShutterRelay);
+    addActionTriggerRelatedChannel(nr + 1, rollerShutterButtonClose, eventButtonUp, rollerShutterRelay);
 #endif
 
     if (eventButtonUp == Supla::Event::ON_CHANGE) {
-      RollerShutterButtonOpen->addAction(actionButtonUp, RollerShutterRelay, Supla::Event::ON_PRESS);
+      rollerShutterButtonOpen->addAction(actionButtonUp, rollerShutterRelay, Supla::Event::ON_PRESS);
       if (pinButtonStop == OFF_GPIO)
-        RollerShutterButtonOpen->addAction(Supla::Action::STOP, RollerShutterRelay, Supla::Event::ON_RELEASE);
+        rollerShutterButtonOpen->addAction(Supla::Action::STOP, rollerShutterRelay, Supla::Event::ON_RELEASE);
 
-      RollerShutterButtonClose->addAction(actionButtonDown, RollerShutterRelay, Supla::Event::ON_PRESS);
+      rollerShutterButtonClose->addAction(actionButtonDown, rollerShutterRelay, Supla::Event::ON_PRESS);
       if (pinButtonStop == OFF_GPIO)
-        RollerShutterButtonClose->addAction(Supla::Action::STOP, RollerShutterRelay, Supla::Event::ON_RELEASE);
+        rollerShutterButtonClose->addAction(Supla::Action::STOP, rollerShutterRelay, Supla::Event::ON_RELEASE);
     }
     else {
-      RollerShutterButtonOpen->addAction(actionButtonUp, RollerShutterRelay, eventButtonUp);
-      RollerShutterButtonClose->addAction(actionButtonDown, RollerShutterRelay, eventButtonUp);
+      rollerShutterButtonOpen->addAction(actionButtonUp, rollerShutterRelay, eventButtonUp);
+      rollerShutterButtonClose->addAction(actionButtonDown, rollerShutterRelay, eventButtonUp);
     }
   }
 
   if (pinButtonStop != OFF_GPIO) {
-    auto RollerShutterButtonStop = new Supla::Control::Button(pinButtonStop, pullupButtonStop, inversedButtonStop);
-    RollerShutterButtonStop->addAction(Supla::Action::STOP, RollerShutterRelay, eventButtonStop);
+    auto RollerShutterButtonStop = Supla::Control::GUI::Button(pinButtonStop, pullupButtonStop, inversedButtonStop, nr);
+    RollerShutterButtonStop->addAction(Supla::Action::STOP, rollerShutterRelay, eventButtonStop);
   }
 
   if (pinLedUp != OFF_GPIO) {
@@ -485,7 +570,8 @@ void addRolleShutter(uint8_t nr) {
 std::vector<Supla::Sensor::ImpulseCounter *> impulseCounter;
 
 void addImpulseCounter(uint8_t nr) {
-  uint8_t pin, pinLED, debounceDelay;
+  uint8_t pin, pinLED;
+  unsigned int debounceDelay;
   bool lowToHigh, inputPullup, levelLed;
 
   pin = ConfigESP->getGpio(nr, FUNCTION_IMPULSE_COUNTER);
@@ -515,8 +601,6 @@ void addRGBWLeds(uint8_t nr) {
   int bluePin = ConfigESP->getGpio(nr, FUNCTION_RGBW_BLUE);
   int brightnessPin = ConfigESP->getGpio(nr, FUNCTION_RGBW_BRIGHTNESS);
 
-  int buttonPin = ConfigESP->getGpio(nr, FUNCTION_BUTTON);
-
 #ifdef ARDUINO_ARCH_ESP8266
   // https://forum.supla.org/viewtopic.php?p=116483#p116483
   analogWriteFreq(400);
@@ -525,32 +609,58 @@ void addRGBWLeds(uint8_t nr) {
   if (redPin != OFF_GPIO && greenPin != OFF_GPIO && bluePin != OFF_GPIO && brightnessPin != OFF_GPIO) {
     auto rgbw = new Supla::Control::RGBWLeds(redPin, greenPin, bluePin, brightnessPin);
     setRGBWDefaultState(rgbw, ConfigESP->getMemory(redPin));
-    setRGBWButton(rgbw, buttonPin);
+    setRGBWButton(nr, rgbw);
+
+#ifdef SUPLA_CONDITIONS
+    Supla::GUI::Conditions::addConditionsExecutive(CONDITIONS::EXECUTIVE_RGBW, S_RGBW_RGB_DIMMER, rgbw, nr);
+    Supla::GUI::Conditions::addConditionsSensor(SENSOR_RGBW, S_RGBW_RGB_DIMMER, rgbw, nr);
+#endif
   }
   else if (redPin != OFF_GPIO && greenPin != OFF_GPIO && bluePin != OFF_GPIO) {
     auto rgbw = new Supla::Control::RGBLeds(redPin, greenPin, bluePin);
     setRGBWDefaultState(rgbw, ConfigESP->getMemory(redPin));
-    setRGBWButton(rgbw, buttonPin);
+    setRGBWButton(nr, rgbw);
+
+#ifdef SUPLA_CONDITIONS
+    Supla::GUI::Conditions::addConditionsExecutive(CONDITIONS::EXECUTIVE_RGBW, S_RGBW_RGB_DIMMER, rgbw, nr);
+    Supla::GUI::Conditions::addConditionsSensor(SENSOR_RGBW, S_RGBW_RGB_DIMMER, rgbw, nr);
+#endif
   }
   else if (brightnessPin != OFF_GPIO) {
     auto rgbw = new Supla::Control::DimmerLeds(brightnessPin);
     setRGBWDefaultState(rgbw, ConfigESP->getMemory(brightnessPin));
-    setRGBWButton(rgbw, buttonPin);
+    setRGBWButton(nr, rgbw);
+
+#ifdef SUPLA_CONDITIONS
+    Supla::GUI::Conditions::addConditionsExecutive(CONDITIONS::EXECUTIVE_RGBW, S_RGBW_RGB_DIMMER, rgbw, nr);
+    Supla::GUI::Conditions::addConditionsSensor(SENSOR_RGBW, S_RGBW_RGB_DIMMER, rgbw, nr);
+#endif
   }
 }
 
-void setRGBWButton(Supla::Control::RGBWBase *rgbw, int buttonPin) {
+void setRGBWButton(uint8_t nr, Supla::Control::RGBWBase *rgbw) {
+  uint8_t nrButton = ConfigESP->getNumberButtonAdditional(BUTTON_RGBW, nr);
+  int buttonPin = ConfigESP->getGpio(nrButton, FUNCTION_BUTTON);
   int pullupButton = ConfigESP->getPullUp(buttonPin);
   int inversedButton = ConfigESP->getInversed(buttonPin);
 
   if (buttonPin != OFF_GPIO) {
-    auto button = new Supla::Control::Button(buttonPin, pullupButton, inversedButton);
+    auto button = Supla::Control::GUI::Button(buttonPin, pullupButton, inversedButton, nrButton);
     button->setMulticlickTime(200);
     button->setHoldTime(400);
-    button->repeatOnHoldEvery(200);
+    button->repeatOnHoldEvery(35);
+
+    rgbw->setStep(1);
+    // rgbw->setMinMaxIterationDelay(750);  // delay between dimming direction
+    // change, 750 ms (default)
+    // rgbw->setMinIterationBrightness(1);  // 1 is default value
 
     button->addAction(Supla::ITERATE_DIM_ALL, rgbw, Supla::ON_HOLD);
     button->addAction(Supla::TOGGLE, rgbw, Supla::ON_CLICK_1);
+
+#ifdef SUPLA_ACTION_TRIGGER
+    addActionTriggerRelatedChannel(nr, button, ConfigESP->getEvent(buttonPin), rgbw);
+#endif
   }
 }
 
@@ -568,160 +678,6 @@ void setRGBWDefaultState(Supla::Control::RGBWBase *rgbw, uint8_t memory) {
   }
 }
 #endif
-
-void addConditionsTurnON(int function, Supla::ChannelElement *client, uint8_t sensorNumber) {
-#if defined(SUPLA_RELAY) && defined(SUPLA_CONDITIONS)
-  for (uint8_t nr = 0; nr <= OFF_GPIO; nr++) {
-    if (ConfigManager->get(KEY_CONDITIONS_SENSOR_TYPE)->getElement(nr).toInt() == function &&
-        strcmp(ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).c_str(), "") != 0 &&
-        ConfigManager->get(KEY_CONDITIONS_SENSOR_NUMBER)->getElement(nr).toInt() == sensorNumber &&
-        ConfigESP->getGpio(nr, FUNCTION_RELAY) != OFF_GPIO) {
-      // Serial.println("addConditionsTurnON");
-      // Serial.println(ConfigManager->get(KEY_CONDITIONS_SENSOR_NUMBER)->getElement(nr).toInt());
-      // Serial.println(ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).c_str());
-
-      double threshold = ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).toDouble();
-
-      client->addAction(Supla::TURN_OFF, Supla::GUI::relay[nr], OnInvalid());
-
-      switch (ConfigManager->get(KEY_CONDITIONS_TYPE)->getElement(nr).toInt()) {
-        case CONDITION_HEATING:
-          client->addAction(Supla::TURN_ON, Supla::GUI::relay[nr], OnLess(threshold));
-          break;
-        case CONDITION_COOLING:
-          client->addAction(Supla::TURN_ON, Supla::GUI::relay[nr], OnGreater(threshold));
-          break;
-        case CONDITION_MOISTURIZING:
-          client->addAction(Supla::TURN_ON, Supla::GUI::relay[nr], OnLess(threshold, true));
-          break;
-        case CONDITION_DRAINGE:
-          client->addAction(Supla::TURN_ON, Supla::GUI::relay[nr], OnGreater(threshold, true));
-          break;
-        case CONDITION_GPIO:
-          client->addAction(Supla::TURN_ON, Supla::GUI::relay[nr], Supla::ON_TURN_ON);
-          break;
-      }
-    }
-  }
-#endif
-}
-
-void addConditionsTurnOFF(int function, Supla::ChannelElement *client, uint8_t sensorNumber) {
-#if defined(SUPLA_RELAY) && defined(SUPLA_CONDITIONS)
-  for (uint8_t nr = 0; nr <= OFF_GPIO; nr++) {
-    if (ConfigManager->get(KEY_CONDITIONS_SENSOR_TYPE)->getElement(nr).toInt() == function &&
-        strcmp(ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).c_str(), "") != 0 &&
-        ConfigManager->get(KEY_CONDITIONS_SENSOR_NUMBER)->getElement(nr).toInt() == sensorNumber &&
-        ConfigESP->getGpio(nr, FUNCTION_RELAY) != OFF_GPIO) {
-      // Serial.println("addConditionsTurnOFF");
-      // Serial.println(ConfigManager->get(KEY_CONDITIONS_SENSOR_NUMBER)->getElement(nr).toInt());
-      // Serial.println(ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).c_str());
-
-      double threshold = ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).toDouble();
-
-      client->addAction(Supla::TURN_OFF, Supla::GUI::relay[nr], OnInvalid());
-
-      switch (ConfigManager->get(KEY_CONDITIONS_TYPE)->getElement(nr).toInt()) {
-        case CONDITION_HEATING:
-          client->addAction(Supla::TURN_OFF, Supla::GUI::relay[nr], OnGreater(threshold));
-          break;
-        case CONDITION_COOLING:
-          client->addAction(Supla::TURN_OFF, Supla::GUI::relay[nr], OnLess(threshold));
-          break;
-        case CONDITION_MOISTURIZING:
-          client->addAction(Supla::TURN_OFF, Supla::GUI::relay[nr], OnGreater(threshold, true));
-          break;
-        case CONDITION_DRAINGE:
-          client->addAction(Supla::TURN_OFF, Supla::GUI::relay[nr], OnLess(threshold, true));
-          break;
-        case CONDITION_GPIO:
-          client->addAction(Supla::TURN_OFF, Supla::GUI::relay[nr], Supla::ON_TURN_OFF);
-          break;
-      }
-    }
-  }
-#endif
-}
-
-void addConditionsTurnON(int function, Supla::Sensor::ElectricityMeter *client, uint8_t sensorNumber) {
-#if defined(SUPLA_RELAY) && defined(SUPLA_CONDITIONS)
-  for (uint8_t nr = 0; nr <= OFF_GPIO; nr++) {
-    if (ConfigManager->get(KEY_CONDITIONS_SENSOR_TYPE)->getElement(nr).toInt() == function &&
-        strcmp(ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).c_str(), "") != 0 &&
-        ConfigManager->get(KEY_CONDITIONS_SENSOR_NUMBER)->getElement(nr).toInt() == sensorNumber &&
-        ConfigESP->getGpio(nr, FUNCTION_RELAY) != OFF_GPIO) {
-      // Serial.println("addConditionsTurnON - ElectricityMeter");
-      // Serial.println(ConfigManager->get(KEY_CONDITIONS_SENSOR_NUMBER)->getElement(nr).toInt());
-      // Serial.println(ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).c_str());
-
-      double threshold = ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).toDouble();
-      // client->addAction(Supla::TURN_OFF, Supla::GUI::relay[nr], OnInvalid());
-
-      switch (ConfigManager->get(KEY_CONDITIONS_TYPE)->getElement(nr).toInt()) {
-        case CONDITION_VOLTAGE:
-          client->addAction(Supla::TURN_ON, Supla::GUI::relay[nr], OnLess(threshold, EmVoltage()));
-          break;
-        case CONDITION_TOTAL_CURRENT:
-          client->addAction(Supla::TURN_ON, Supla::GUI::relay[nr], OnLess(threshold, EmTotalCurrent()));
-          break;
-        case CONDITION_TOTAL_POWER_ACTIVE:
-          client->addAction(Supla::TURN_ON, Supla::GUI::relay[nr], OnLess(threshold, EmTotalPowerActiveW()));
-          break;
-
-        case CONDITION_VOLTAGE_OPPOSITE:
-          client->addAction(Supla::TURN_ON, Supla::GUI::relay[nr], OnGreater(threshold, EmVoltage()));
-          break;
-        case CONDITION_TOTAL_CURRENT_OPPOSITE:
-          client->addAction(Supla::TURN_ON, Supla::GUI::relay[nr], OnGreater(threshold, EmTotalCurrent()));
-          break;
-        case CONDITION_TOTAL_POWER_ACTIVE_OPPOSITE:
-          client->addAction(Supla::TURN_ON, Supla::GUI::relay[nr], OnGreater(threshold, EmTotalPowerActiveW()));
-          break;
-      }
-    }
-  }
-#endif
-}
-
-void addConditionsTurnOFF(int function, Supla::Sensor::ElectricityMeter *client, uint8_t sensorNumber) {
-#if defined(SUPLA_RELAY) && defined(SUPLA_CONDITIONS)
-  for (uint8_t nr = 0; nr <= OFF_GPIO; nr++) {
-    if (ConfigManager->get(KEY_CONDITIONS_SENSOR_TYPE)->getElement(nr).toInt() == function &&
-        strcmp(ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).c_str(), "") != 0 &&
-        ConfigManager->get(KEY_CONDITIONS_SENSOR_NUMBER)->getElement(nr).toInt() == sensorNumber &&
-        ConfigESP->getGpio(nr, FUNCTION_RELAY) != OFF_GPIO) {
-      // Serial.println("addConditionsTurnOFF - ElectricityMeter");
-      // Serial.println(ConfigManager->get(KEY_CONDITIONS_SENSOR_NUMBER)->getElement(nr).toInt());
-      // Serial.println(ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).c_str());
-
-      double threshold = ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).toDouble();
-      //   client->addAction(Supla::TURN_OFF, Supla::GUI::relay[nr], OnInvalid());
-
-      switch (ConfigManager->get(KEY_CONDITIONS_TYPE)->getElement(nr).toInt()) {
-        case CONDITION_VOLTAGE:
-          client->addAction(Supla::TURN_OFF, Supla::GUI::relay[nr], OnGreater(threshold, EmVoltage()));
-          break;
-        case CONDITION_TOTAL_CURRENT:
-          client->addAction(Supla::TURN_OFF, Supla::GUI::relay[nr], OnGreater(threshold, EmTotalCurrent()));
-          break;
-        case CONDITION_TOTAL_POWER_ACTIVE:
-          client->addAction(Supla::TURN_OFF, Supla::GUI::relay[nr], OnGreater(threshold, EmTotalPowerActiveW()));
-          break;
-
-        case CONDITION_VOLTAGE_OPPOSITE:
-          client->addAction(Supla::TURN_OFF, Supla::GUI::relay[nr], OnLess(threshold, EmVoltage()));
-          break;
-        case CONDITION_TOTAL_CURRENT_OPPOSITE:
-          client->addAction(Supla::TURN_OFF, Supla::GUI::relay[nr], OnLess(threshold, EmTotalCurrent()));
-          break;
-        case CONDITION_TOTAL_POWER_ACTIVE_OPPOSITE:
-          client->addAction(Supla::TURN_OFF, Supla::GUI::relay[nr], OnLess(threshold, EmTotalPowerActiveW()));
-          break;
-      }
-    }
-  }
-#endif
-}
 
 #if defined(GUI_SENSOR_1WIRE) || defined(GUI_SENSOR_I2C) || defined(GUI_SENSOR_SPI)
 void addCorrectionSensor() {
@@ -763,8 +719,9 @@ void addHLW8012(int8_t pinCF, int8_t pinCF1, int8_t pinSEL) {
   if (counterHLW8012 == NULL && pinCF != OFF_GPIO && pinCF1 != OFF_GPIO && pinSEL != OFF_GPIO) {
     counterHLW8012 = new Supla::Sensor::HLW_8012(pinCF, pinCF1, pinSEL);
 
-    Supla::GUI::addConditionsTurnON(SENSOR_HLW8012, counterHLW8012);
-    Supla::GUI::addConditionsTurnOFF(SENSOR_HLW8012, counterHLW8012);
+#ifdef SUPLA_CONDITIONS
+    Supla::GUI::Conditions::addConditionsSensor(SENSOR_HLW8012, S_HLW8012, counterHLW8012);
+#endif
   }
   eeprom.setStateSavePeriod(TIME_SAVE_PERIOD_IMPULSE_COUNTER_SEK * 1000);
 }
@@ -775,10 +732,11 @@ Supla::Sensor::CSE_7766 *counterCSE7766 = nullptr;
 
 void addCSE7766(int8_t pinRX) {
   if (counterCSE7766 == NULL && pinRX != OFF_GPIO) {
-    counterCSE7766 = new Supla::Sensor::CSE_7766(pinRX);
+    counterCSE7766 = new Supla::Sensor::CSE_7766(ConfigESP->getHardwareSerial(pinRX));
 
-    Supla::GUI::addConditionsTurnON(SENSOR_CSE7766, counterCSE7766);
-    Supla::GUI::addConditionsTurnOFF(SENSOR_CSE7766, counterCSE7766);
+#ifdef SUPLA_CONDITIONS
+    Supla::GUI::Conditions::addConditionsSensor(SENSOR_CSE7766, S_CSE7766, counterCSE7766);
+#endif
   }
   eeprom.setStateSavePeriod(TIME_SAVE_PERIOD_IMPULSE_COUNTER_SEK * 1000);
 }
@@ -791,8 +749,9 @@ void addADE7953(int8_t pinIRQ) {
   if (couterADE7953 == NULL && pinIRQ != OFF_GPIO) {
     couterADE7953 = new Supla::Sensor::ADE7953(pinIRQ);
 
-    Supla::GUI::addConditionsTurnON(SENSOR_ADE7953, couterADE7953);
-    Supla::GUI::addConditionsTurnOFF(SENSOR_ADE7953, couterADE7953);
+#ifdef SUPLA_CONDITIONS
+    Supla::GUI::Conditions::addConditionsSensor(SENSOR_ADE7953, S_ADE7953, couterADE7953);
+#endif
   }
   eeprom.setStateSavePeriod(TIME_SAVE_PERIOD_IMPULSE_COUNTER_SEK * 1000);
 }
@@ -805,12 +764,25 @@ Supla::Sensor::MPX_5XXX *mpx = nullptr;
 #ifdef SUPLA_ANALOG_READING_MAP
 Supla::Sensor::AnalogRedingMap **analog = nullptr;
 #endif
+
+#ifdef SUPLA_MODBUS_SDM
+Supla::Sensor::SDM630 *smd;
+#endif
+
+#ifdef SUPLA_MODBUS_SDM_ONE_PHASE
+Supla::Sensor::SDM120 *smd120;
+#endif
 }  // namespace GUI
 }  // namespace Supla
 
 SuplaConfigManager *ConfigManager = nullptr;
 SuplaConfigESP *ConfigESP = nullptr;
 SuplaWebServer *WebServer = nullptr;
+
+#ifdef GUI_SENSOR_I2C_EXPENDER
+Supla::Control::ConfigExpander *Expander;
+#endif
+
 #ifdef SUPLA_WT32_ETH01_LAN8720
 Supla::WT32_ETH01 *eth = nullptr;
 #else

@@ -69,7 +69,7 @@ void addTextBox(String& html,
   html += F("<input name='");
   html += input_id;
   if (password) {
-    if (ConfigESP->configModeESP != NORMAL_MODE) {
+    if (ConfigESP->configModeESP != Supla::DEVICE_MODE_NORMAL) {
       html += F("' type='password");
     }
   }
@@ -172,8 +172,15 @@ void addNumberBox(String& html, const String& input_id, const String& name, uint
   WebServer->sendHeader();
 }
 
-void addNumberBox(String& html, const String& input_id, const String& name, const String& placeholder, bool required, const String& value) {
-  html += F("<i><label>");
+void addNumberBox(
+    String& html, const String& input_id, const String& name, const String& placeholder, bool required, const String& value, bool underline) {
+  if (underline) {
+    html += F("<i>");
+  }
+  else {
+    html += F("<i style='border-bottom:none !important;'>");
+  }
+  html += F("<label>");
   html += name;
   html += F("</label><input name='");
   html += input_id;
@@ -210,8 +217,25 @@ void addLinkBox(String& html, const String& name, const String& url) {
   WebServer->sendHeader();
 }
 
+void addHyperlink(String& html, const String& name, const String& url) {
+  html += F("<i>");
+  html += F("<label>");
+  html += F("<a href='");
+  html += url;
+  html += F("' target='_self'>");
+  html += name;
+  html += F("</a>");
+  html += F("</label>");
+  html += F("</i>");
+  WebServer->sendHeader();
+}
+
 void addListGPIOLinkBox(String& html, const String& input_id, const String& name, const String& url, uint8_t function) {
   addListGPIOBox(html, input_id, name, function, 0, true, url, true);
+}
+
+void addListGPIOLinkBox(String& html, const String& input_id, const String& name, const String& url, uint8_t function, uint8_t nr, bool no_number) {
+  addListGPIOBox(html, input_id, name, function, nr, true, url, no_number);
 }
 
 void addListGPIOLinkBox(String& html, const String& input_id, const String& name, const String& url, uint8_t function, uint8_t nr) {
@@ -240,9 +264,7 @@ void addListGPIOBox(
     html += F("<a href='");
     html += PATH_START;
     html += url;
-    if (!no_number) {
-      html += nr;
-    }
+    html += nr;
     html += F("'>");
 
     if (!no_number) {
@@ -317,11 +339,16 @@ void addListExpanderBox(String& html, const String& input_id, const String& name
   uint8_t type = ConfigManager->get(KEY_ACTIVE_EXPENDER)->getElement(function).toInt();
 
   if (nr == 0) {
-    addListBox(html, INPUT_EXPENDER_TYPE, S_TYPE, EXPENDER_LIST_P, 4, type);
+    addListBox(html, INPUT_EXPENDER_TYPE, S_TYPE, EXPENDER_LIST_P, EXPENDER_COUNT, type);
   }
 
-  if (ConfigESP->checkActiveMCP23017(function)) {
-    addListExpanderGPIOBox(webContentBuffer, input_id, name, function, nr, url);
+  if (Expander->checkActiveExpander(function)) {
+    if (nr < MAX_EXPANDER_FOR_FUNCTION) {
+      addListExpanderGPIOBox(webContentBuffer, input_id, name, function, nr, url);
+    }
+    else {
+      addListGPIOLinkBox(webContentBuffer, input_id, name, getParameterRequest(url, ARG_PARM_NUMBER), function, nr);
+    }
   }
   else {
     addListGPIOLinkBox(webContentBuffer, input_id, name, getParameterRequest(url, ARG_PARM_NUMBER), function, nr);
@@ -335,10 +362,15 @@ void addListExpanderGPIOBox(String& html, const String& input_id, const String& 
 
   type = ConfigManager->get(KEY_ACTIVE_EXPENDER)->getElement(function).toInt();
 
-  if (type == EXPENDER_PCF8574) {
+  if (type == EXPENDER_PCF8574 || type == EXPENDER_PCF8574_I2C2) {
     maxNr = 8;
     listAdressExpender = EXPENDER_PCF8574_P;
     listExpender = GPIO_PCF_8574_P;
+  }
+  else if (type == EXPENDER_PCF8575 || type == EXPENDER_PCF8575_I2C2) {
+    maxNr = 16;
+    listAdressExpender = EXPENDER_P;
+    listExpender = GPIO_PCF_PCF8575_P;
   }
   else {
     maxNr = 16;
@@ -348,7 +380,7 @@ void addListExpanderGPIOBox(String& html, const String& input_id, const String& 
 
   if (nr == 0 || nr == maxNr) {
     for (uint8_t gpio = nr; gpio <= OFF_GPIO_EXPENDER; gpio++) {
-      address = ConfigESP->getAdressMCP23017(gpio, function);
+      address = Expander->getAdressExpander(gpio, function);
       if (address != OFF_ADDRESS_MCP23017) {
         break;
       }
@@ -385,11 +417,11 @@ void addListExpanderGPIO(String& html,
   html += nr;
   html += F("'>");
 
-  uint8_t selected = ConfigESP->getGpioMCP23017(nr, function);
+  uint8_t selected = Expander->getGpioExpander(nr, function);
 
   for (uint8_t suported = 0; suported < size; suported++) {
     if (!String(FPSTR(array_P[suported])).isEmpty()) {
-      if (ConfigESP->checkBusyGpioMCP23017(suported, nr, function) || selected == suported) {
+      if (Expander->checkBusyGpioExpander(suported, nr, function) || selected == suported) {
         html += F("<option value='");
         html += suported;
         html += F("'");
@@ -406,8 +438,22 @@ void addListExpanderGPIO(String& html,
 }
 #endif
 
-void addListBox(String& html, const String& input_id, const String& name, const char* const* array_P, uint8_t size, uint8_t selected, uint8_t nr) {
-  html += F("<i><label>");
+void addListBox(String& html,
+                const String& input_id,
+                const String& name,
+                const char* const* array_P,
+                uint8_t size,
+                uint8_t selected,
+                uint8_t nr,
+                bool underline) {
+  if (underline) {
+    html += F("<i>");
+  }
+  else {
+    html += F("<i style='border-bottom:none !important;'>");
+  }
+
+  html += F("<label>");
   if (nr != 0) {
     html += nr;
     html += F(". ");
@@ -536,41 +582,69 @@ String getParameterRequest(const String& url, const String& param, const String&
 const String SuplaJavaScript(const String& java_return) {
   String java_script =
       F("<script type='text/javascript'>setTimeout(function(){var element=document.getElementById('msg');if(element != "
-        "null){element.style.visibility='hidden';if(window.location.pathname != '/");
+        "null){element.style.visibility='hidden';var url = window.location.pathname + window.location.search; if(url != '/");
   java_script += java_return;
   java_script += F("'){location.href='");
   java_script += java_return;
-  java_script += F("'};}},1600);");
+  java_script += F("'};}},4000);");
   java_script += F("if(window.top.location != window.location){window.top.location.href = window.location.href;}</script>\n");
   return java_script;
 }
 
+// TODO: @krycha88 Usunąć z SuplaSaveResult nieużywany status WRITE_ERROR_UNABLE_TO_READ_FILE_FS_PARTITION_MISSING```
 const String SuplaSaveResult(int save) {
-  if (save == 0)
-    return F("");
   String saveresult = "";
   saveresult += F("<div id=\"msg\" class=\"c\">");
-  if (save == 1) {
-    saveresult += S_DATA_SAVED;
+
+  switch (save) {
+    case SaveResult::DATA_SAVE:
+      saveresult += S_DATA_SAVED;
+      break;
+    case SaveResult::RESTART_MODULE:
+      saveresult += S_RESTART_MODULE;
+      break;
+    case SaveResult::DATA_ERASED_RESTART_DEVICE:
+      saveresult += S_DATA_ERASED_RESTART_DEVICE;  // do usunięcia
+      break;
+    case SaveResult::WRITE_ERROR_UNABLE_TO_READ_FILE_FS_PARTITION_MISSING:  // do usunięcia
+      saveresult += S_WRITE_ERROR_UNABLE_TO_READ_FILE_FS_PARTITION_MISSING;
+      break;
+    case SaveResult::DATA_SAVED_RESTART_MODULE:
+      saveresult += S_DATA_SAVED_RESTART_MODULE;
+      break;
+    case SaveResult::WRITE_ERROR_BAD_DATA:
+      saveresult += S_WRITE_ERROR_BAD_DATA;
+      break;
+    case SaveResult::DATA_SAVE_MODE_CONFIG:
+      saveresult += F("data saved");
+      break;
+    case SaveResult::UPDATE_SUCCESS:
+      saveresult += F("Aktualizacja zakończona.");
+      break;
+    case SaveResult::UPDATE_ERROR:
+      saveresult += F("Błąd aktualizacji.");
+      break;
+    case SaveResult::UPDATE_WAIT:
+      saveresult += F("Zostanie wygenerowana nowa wersja. Spróbuj ponownie za 5min.");
+      break;
+    case SaveResult::UPDATE_NO_UPDATES:
+      saveresult += F("Brak aktualizacji.");
+      break;
+    case SaveResult::UPDATE_TOO_LESS_SPACE:
+      saveresult += F("Wykonaj aktualizację 2 etapową.");
+      break;
+    case SaveResult::UPDATE_NEW_VERSION:
+      saveresult += F("Dostępna nowa wersja.");
+      break;
+    case SaveResult::UPDATE_2STEP:
+      saveresult += F("Aktualizacja 2 etapowa.");
+      break;
+
+    default:
+      return F("");
+      break;
   }
-  else if (save == 2) {
-    saveresult += S_RESTART_MODULE;
-  }
-  else if (save == 3) {
-    saveresult += S_DATA_ERASED_RESTART_DEVICE;
-  }
-  else if (save == 4) {
-    saveresult += S_WRITE_ERROR_UNABLE_TO_READ_FILE_FS_PARTITION_MISSING;
-  }
-  else if (save == 5) {
-    saveresult += S_DATA_SAVED_RESTART_MODULE;
-  }
-  else if (save == 6) {
-    saveresult += S_WRITE_ERROR_BAD_DATA;
-  }
-  else if (save == 7) {
-    saveresult += F("data saved");
-  }
+
   saveresult += F("</div>");
   return saveresult;
 }

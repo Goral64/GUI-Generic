@@ -24,12 +24,12 @@
 #define GUI_SENSOR_OTHER
 #endif
 
-#if defined(SUPLA_HLW8012) || defined(SUPLA_PZEM_V_3) || defined(SUPLA_CSE7766)
+#if defined(SUPLA_HLW8012) || defined(SUPLA_PZEM_V_3) || defined(SUPLA_CSE7766) || defined(SUPLA_MODBUS_SDM) || defined(SUPLA_MODBUS_SDM_ONE_PHASE)
 #define GUI_OTHER_ENERGY
 #endif
 
 #if defined(GUI_SENSOR_OTHER) || defined(GUI_OTHER_ENERGY) || defined(SUPLA_IMPULSE_COUNTER) || defined(SUPLA_RGBW) || defined(SUPLA_PUSHOVER) || \
-    defined(SUPLA_RF_BRIDGE)
+    defined(SUPLA_RF_BRIDGE) || defined(SUPLA_WAKE_ON_LAN)
 #define GUI_OTHER
 #endif
 
@@ -102,12 +102,16 @@ void handleCounterCalibrateSave();
 #define INPUT_RGBW_BLUE             "rgbwb"
 #define INPUT_RGBW_BRIGHTNESS       "rgbwbr"
 #define INPUT_RGBW_COLOR_BRIGHTNESS "rgbwcb"
+#define INPUT_BUTTON_RGBW           "ibr"
 #define INPUT_RGBW_MEMORY           "irm"
 #endif
 
 #ifdef SUPLA_PUSHOVER
 #define INPUT_PUSHOVER_TOKEN "pot"
 #define INPUT_PUSHOVER_USER  "pou"
+
+#define INPUT_PUSHOVER_MESSAGE "ipm"
+#define INPUT_PUSHOVER_SOUND   "ips"
 #endif
 
 #ifdef SUPLA_HC_SR04
@@ -138,6 +142,17 @@ void handleCounterCalibrateSave();
 #define PATH_BRIDGE "bridge"
 
 void receiveCodeRFBridge();
+#endif
+
+#ifdef SUPLA_WAKE_ON_LAN
+#define INPUT_WAKE_ON_LAN_MAX "iwonmax"
+#define INPUT_WAKE_ON_LAN_MAC "iwonm"
+#endif
+
+#if defined(SUPLA_MODBUS_SDM) || defined(SUPLA_MODBUS_SDM_ONE_PHASE)
+#define INPUT_SDM630_RX       "isdmrx"
+#define INPUT_SDM630_TX       "isdmtx"
+#define INPUT_SDM630_BAUDRATE "isdmb"
 #endif
 
 #endif  // SuplaWebPageOther_h

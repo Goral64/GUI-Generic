@@ -19,29 +19,40 @@
  * by setting LOW or HIGH output on selected GPIO.
  */
 
-#ifndef _relay_h
-#define _relay_h
-
-#include "../actions.h"
-#include "../channel_element.h"
-#include "../io.h"
-#include "../storage/storage.h"
-#include "../action_handler.h"
-#include "../local_action.h"
+#ifndef SRC_SUPLA_CONTROL_RELAY_H_
+#define SRC_SUPLA_CONTROL_RELAY_H_
 
 #include <stdint.h>
 
+#include "../action_handler.h"
+#include "../actions.h"
+#include "../channel_element.h"
+#include "../io.h"
+#include "../local_action.h"
+#include "../storage/storage.h"
+
 #define STATE_ON_INIT_RESTORED_OFF -3
-#define STATE_ON_INIT_RESTORED_ON -2
-#define STATE_ON_INIT_RESTORE -1
-#define STATE_ON_INIT_OFF 0
-#define STATE_ON_INIT_ON 1
+#define STATE_ON_INIT_RESTORED_ON  -2
+#define STATE_ON_INIT_RESTORE      -1
+#define STATE_ON_INIT_OFF          0
+#define STATE_ON_INIT_ON           1
+
+#define RELAY_FLAGS_ON (1 << 0)
+#define RELAY_FLAGS_STAIRCASE (1 << 1)
+#define RELAY_FLAGS_IMPULSE_FUNCTION (1 << 2)  // i.e. gate, door, gateway
+
 
 namespace Supla {
 namespace Control {
+class Button;
+
 class Relay : public ChannelElement, public ActionHandler {
  public:
-  Relay(int pin,
+  explicit Relay(Supla::Io *io, int pin,
+        bool highIsOn = true,
+        _supla_int_t functions = (0xFF ^
+                                  SUPLA_BIT_FUNC_CONTROLLINGTHEROLLERSHUTTER));
+  explicit Relay(int pin,
         bool highIsOn = true,
         _supla_int_t functions = (0xFF ^
                                   SUPLA_BIT_FUNC_CONTROLLINGTHEROLLERSHUTTER));
@@ -49,7 +60,7 @@ class Relay : public ChannelElement, public ActionHandler {
   virtual Relay &setDefaultStateOn();
   virtual Relay &setDefaultStateOff();
   virtual Relay &setDefaultStateRestore();
-  virtual Relay &keepTurnOnDuration(bool keep = true);
+  virtual Relay &keepTurnOnDuration(bool keep = true);  // DEPREACATED
 
   virtual uint8_t pinOnValue();
   virtual uint8_t pinOffValue();
@@ -58,28 +69,55 @@ class Relay : public ChannelElement, public ActionHandler {
   virtual bool isOn();
   virtual void toggle(_supla_int_t duration = 0);
 
-  void handleAction(int event, int action);
+  void attach(Supla::Control::Button *);
 
-  void onInit();
-  void onLoadState();
-  void onSaveState();
-  void iterateAlways();
-  int handleNewValueFromServer(TSD_SuplaChannelNewValue *newValue);
+  void handleAction(int event, int action) override;
+
+  void onInit() override;
+  void onLoadState() override;
+  void onSaveState() override;
+  void iterateAlways() override;
+  bool iterateConnected() override;
+  int handleNewValueFromServer(TSD_SuplaChannelNewValue *newValue) override;
+  void onRegistered(Supla::Protocol::SuplaSrpc *suplaSrpc) override;
+  void handleChannelConfig(TSD_ChannelConfig *result) override;
+
+  // Method is used by external integrations to prepare TSD_SuplaChannelNewValue
+  // value for specific channel type (i.e. to prefill durationMS field when
+  // required)
+  void fillSuplaChannelNewValue(TSD_SuplaChannelNewValue *value) override;
+
   unsigned _supla_int_t getStoredTurnOnDurationMs();
 
+  bool isStaircaseFunction() const;
+  bool isImpulseFunction() const;
+  void disableCountdownTimerFunction();
+  void enableCountdownTimerFunction();
+  bool isCountdownTimerFunctionEnabled() const;
+
  protected:
-  int pin;
-  bool highIsOn;
+  void setChannelFunction(_supla_int_t newFunction);
+  void updateTimerValue();
+  int pin = -1;
+  bool highIsOn = true;
+  int channelFunction = 0;
+  bool keepTurnOnDurationMs = false;
 
-  int8_t stateOnInit;
+  int8_t stateOnInit = STATE_ON_INIT_OFF;
 
-  unsigned _supla_int_t durationMs;
-  unsigned _supla_int_t storedTurnOnDurationMs;
-  unsigned long durationTimestamp;
-  bool keepTurnOnDurationMs;
+  uint32_t durationMs = 0;
+  uint32_t storedTurnOnDurationMs = 0;
+  uint32_t durationTimestamp = 0;
+
+  uint32_t lastDurationMsOnTimerUpdate = 0;
+  uint32_t timerUpdateTimestamp = 0;
+  bool lastStateOnTimerUpdate = false;
+
+  Supla::Io *io = nullptr;
+  Supla::Control::Button *attachedButton = nullptr;
 };
 
 };  // namespace Control
 };  // namespace Supla
 
-#endif
+#endif  // SRC_SUPLA_CONTROL_RELAY_H_

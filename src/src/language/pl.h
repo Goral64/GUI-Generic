@@ -26,6 +26,7 @@
 #define S_UPDATE                  "Aktualizacja"
 #define S_RESTART                 "Restart"
 #define S_RETURN                  "Powrót"
+#define S_CONDITION               "Warunek"
 
 #define S_TEMPLATE_BOARD                                       "Szablon płytek"
 #define S_TYPE                                                 "Rodzaj"
@@ -39,18 +40,18 @@
 #define S_CFG_MODE                                             "Tryb"
 #define S_QUANTITY                                             "ILOŚĆ"
 #define S_GPIO_SETTINGS_FOR_RELAYS                             "Ustawienie GPIO dla przekaźników"
-#define S_RELAY                                                "PRZEKAŹNIK"
+#define S_RELAY                                                "Przekaźnik"
 #define S_RELAY_NR_SETTINGS                                    "Ustawienia przekaźnika nr. "
 #define S_STATE_CONTROL                                        "Załączany stanem"
 #define S_REACTION_AFTER_RESET                                 "Reakcja po resecie"
 #define S_GPIO_SETTINGS_FOR_BUTTONS                            "Ustawienie GPIO dla przycisków"
-#define S_BUTTON                                               "PRZYCISK"
+#define S_BUTTON                                               "Przycisk"
 #define S_BUTTON_NR_SETTINGS                                   "Ustawienia przycisku nr. "
-#define S_REACTION_TO                                          "Reakcja na"
+#define S_REACTION                                             "Reakcja"
 #define S_RELAY_CONTROL                                        "Sterowanie przekaźnikiem"
 #define S_ACTION                                               "Akcja"
 #define S_GPIO_SETTINGS_FOR_LIMIT_SWITCH                       "Ustawienie GPIO dla cz. otwarcia"
-#define S_LIMIT_SWITCH                                         "KRAŃCÓWKA"
+#define S_LIMIT_SWITCH                                         "Krańcówka"
 #define S_GPIO_SETTINGS_FOR                                    "Ustawienie GPIO dla"
 #define S_FOUND                                                "Znalezione"
 #define S_NO_SENSORS_CONNECTED                                 "Brak podłączonych czujników"
@@ -96,25 +97,39 @@
 #define S_STATUS_NETWORK_DISCONNECTED    "Brak połączenia z siecią"
 
 //#### SuplaCommonPROGMEM.h ####
-#define S_OFF                           "WYŁĄCZ"
-#define S_ON                            "ZAŁĄCZ"
-#define S_TOGGLE                        "PRZEŁĄCZ"
-#define S_LOW                           "LOW"
-#define S_HIGH                          "HIGH"
-#define S_POSITION_MEMORY               "PAMIĘTAJ STAN"
-#define S_REACTION_ON_PRESS             "WCIŚNIĘCIE - monostabilny"
-#define S_REACTION_ON_RELEASE           "ZWOLNIENIE - monostabilny"
-#define S_REACTION_ON_CHANGE            "ZMIANA STANU - bistabilny"
-#define S_REACTION_ON_HOLD              "PRZYTRZYMANIE"
-#define S_CFG_10_PRESSES                "10 WCIŚNIĘĆ"
-#define S_5SEK_HOLD                     "WCIŚNIĘTY 5 SEKUND"
-#define S_NORMAL                        "NORMALNE"
-#define S_SLOW                          "WOLNE"
-#define S_MANUALLY                      "RĘCZNE"
-#define S_ON_CH_VAL_OFF_HEATING         "ON > wartość kanału > OFF (ogrzewanie)"
-#define S_ON_CH_VAL_OFF_COOLING         "ON < wartość kanału < OFF (chłodzenie)"
-#define S_ON_2CH_VAL_OFF_HUMIDIFICATION "ON > 2 wartość kanału > OFF (nawilżanie)"
-#define S_ON_2CH_VAL_OFF_DRYING         "ON < 2 wartość kanału < OFF (osuszanie)"
+#define S_OFF                          "WYŁĄCZ"
+#define S_ON                           "ZAŁĄCZ"
+#define S_TOGGLE                       "PRZEŁĄCZ"
+#define S_LOW                          "LOW"
+#define S_HIGH                         "HIGH"
+#define S_POSITION_MEMORY              "PAMIĘTAJ STAN"
+#define S_REACTION_ON_PRESS            "WCIŚNIĘCIE - monostabilny"
+#define S_REACTION_ON_RELEASE          "ZWOLNIENIE - monostabilny"
+#define S_REACTION_ON_CHANGE           "ZMIANA STANU - bistabilny"
+#define S_REACTION_ON_HOLD             "PRZYTRZYMANIE"
+#define S_REACTION_MOTION_SENSOR       "CZUJNIK RUCHU"
+#define S_REACTION_AUTOMATIC_STAIRCASE "AUTOMAT SCHODOWY"
+#define S_CFG_10_PRESSES               "10 WCIŚNIĘĆ"
+#define S_5SEK_HOLD                    "WCIŚNIĘTY 5 SEKUND"
+#define S_NORMAL                       "NORMALNE"
+#define S_SLOW                         "WOLNE"
+#define S_MANUALLY                     "RĘCZNE"
+
+#ifdef SUPLA_CONDITIONS
+#define S_CONDITIONING     "Warunkowanie"
+#define S_TURN_ON_WHEN     "ZAŁĄCZ, jeżeli wartość"
+#define S_SWITCH_ON_VALUE  "Wartość załączenia"
+#define S_SWITCH_OFF_VALUE "Wartość wyłączenia"
+
+#define S_ON_LESS    "mniejsza"
+#define S_ON_GREATER "większa"
+
+#define S_CHANNEL_VALUE "kanału"
+#define S_HUMIDITY      "wilgotności"
+#define S_VOLTAGE       "napięcia[V]"
+#define S_CURRENT       "natężenia[A]"
+#define S_POWER         "mocy czynnej[W]"
+#endif
 
 //#### SuplaWebServer.cpp ####
 #define S_LIMIT_SWITCHES "KRAŃCÓWKI"
@@ -161,11 +176,7 @@
 #define S_STATE                   "Stan"
 #define S_MESSAGE                 "Wiadomość"
 #define S_DIRECT_LINKS            "Linki bezpośrednie"
-#define S_CONDITIONING            "Warunkowanie"
 #define S_SENSOR                  "Czujnik"
-#define S_CONDITION               "Warunek"
-#define S_SWITCH_ON_VALUE         "wartość włączenia"
-#define S_SWITCH_OFF_VALUE        "wartość wyłączenia"
 #define S_SETTINGS_FOR_RELAYS     "Ustawienia dla przekaźników"
 
 //#### SuplaHTTPUpdateServer.cpp ####
@@ -173,10 +184,10 @@
 #define S_SKETCH_MEMORY_SIZE       "Rozmiar pamięci w szkicu"
 #define S_SKETCH_LOADED_SIZE       "Rozmiar wczytanego szkicu"
 #define S_SKETCH_UPLOAD_MAX_SIZE   "Maks. rozmiar przesyłanego szkicu"
-#define S_UPDATE_FIRMWARE          "Aktualizacja oprogramowania"
+#define S_UPDATE_FIRMWARE          "Aktualizuj"
 #define S_UPDATE_SUCCESS_REBOOTING "Aktualizacja udana! Ponowne uruchamianie ..."
 #define S_WARNING                  "OSTRZEŻENIE"
-#define S_ONLY_2_STEP_OTA          "używaj tylko dwuetapowej aktualizacji OTA. Najpierw załaduj"
+#define S_ONLY_2_STEP_OTA          "użyj dwuetapowej aktualizacji. Najpierw wgraj"
 
 //#### SuplaOled.cpp ####
 #define S_CONFIGURATION_MODE "Tryb konfiguracji"
@@ -198,5 +209,13 @@
 #define S_TEMP_HYGR         "Temperatur + Wilgotność"
 #define S_PRESS             "Ciśnienie"
 #define S_ELECTRICITY_METER "Licznik energii elektycznej"
+#define S_DISTANCE          "Odległość"
+#define S_DEPTH             "Głębokość"
+
+#ifdef SUPLA_PUSHOVER
+#define S_SOUND "Dźwięk"
+#endif
+
+#define S_BAUDRATE "Prędkość komunikacji"
 
 #endif  // _LANGUAGE_PL_S_H_

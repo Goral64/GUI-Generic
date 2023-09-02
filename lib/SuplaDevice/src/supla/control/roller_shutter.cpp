@@ -14,11 +14,13 @@
  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#include <supla/storage/storage.h>
-
 #include "roller_shutter.h"
-#include <supla-common/log.h>
+
+#include <supla/log_wrapper.h>
+
+#include <supla/storage/storage.h>
 #include <supla/time.h>
+#include <supla/io.h>
 
 namespace Supla {
 namespace Control {
@@ -31,37 +33,29 @@ struct RollerShutterStateData {
 };
 #pragma pack(pop)
 
+RollerShutter::RollerShutter(Supla::Io *io,
+                             int pinUp,
+                             int pinDown,
+                             bool highIsOn)
+    : RollerShutter(pinUp, pinDown, highIsOn) {
+  this->io = io;
+}
+
 RollerShutter::RollerShutter(int pinUp, int pinDown, bool highIsOn)
-    : closingTimeMs(0),
-      openingTimeMs(0),
-      calibrate(true),
-      comfortDownValue(20),
-      comfortUpValue(80),
-      newTargetPositionAvailable(false),
-      highIsOn(highIsOn),
-      currentDirection(STOP_DIR),
-      lastDirection(STOP_DIR),
-      currentPosition(UNKNOWN_POSITION),
-      targetPosition(STOP_POSITION),
-      pinUp(pinUp),
-      pinDown(pinDown),
-      lastMovementStartTime(0),
-      doNothingTime(0),
-      calibrationTime(0),
-      operationTimeout(0) {
-  lastPositionBeforeMovement = currentPosition;
+    : highIsOn(highIsOn), pinUp(pinUp), pinDown(pinDown) {
   channel.setType(SUPLA_CHANNELTYPE_RELAY);
   channel.setDefault(SUPLA_CHANNELFNC_CONTROLLINGTHEROLLERSHUTTER);
   channel.setFuncList(SUPLA_BIT_FUNC_CONTROLLINGTHEROLLERSHUTTER);
+  channel.setFlag(SUPLA_CHANNEL_FLAG_RS_SBS_AND_STOP_ACTIONS);
 }
 
 void RollerShutter::onInit() {
   Supla::Io::digitalWrite(
-      channel.getChannelNumber(), pinUp, highIsOn ? LOW : HIGH);
+      channel.getChannelNumber(), pinUp, highIsOn ? LOW : HIGH, io);
   Supla::Io::digitalWrite(
-      channel.getChannelNumber(), pinDown, highIsOn ? LOW : HIGH);
-  Supla::Io::pinMode(channel.getChannelNumber(), pinUp, OUTPUT);
-  Supla::Io::pinMode(channel.getChannelNumber(), pinDown, OUTPUT);
+      channel.getChannelNumber(), pinDown, highIsOn ? LOW : HIGH, io);
+  Supla::Io::pinMode(channel.getChannelNumber(), pinUp, OUTPUT, io);
+  Supla::Io::pinMode(channel.getChannelNumber(), pinDown, OUTPUT, io);
 }
 
 /*
@@ -85,18 +79,59 @@ int RollerShutter::handleNewValueFromServer(
   setOpenCloseTime(newClosingTime, newOpeningTime);
 
   char task = newValue->value[0];
-  supla_log(LOG_DEBUG, "RollerShutter[%d] new value from server: %d",
+  SUPLA_LOG_DEBUG("RollerShutter[%d] new value from server: %d",
       channel.getChannelNumber(), task);
-  if (task == 0) {
-    stop();
-  } else if (task == 1) {
-    moveDown();
-  } else if (task == 2) {
-    moveUp();
-  } else if (task >= 10 && task <= 110) {
-    setTargetPosition(task - 10);
-  }
+  switch (task) {
+    case 0: {
+      stop();
+      break;
+    }
+    case 1: {
+      moveDown();
+      break;
+    }
+    case 2: {
+      moveUp();
+      break;
+    }
+    case 3: {  // down or stop
+      if (inMove()) {
+        stop();
+      } else {
+        moveDown();
+      }
+      break;
+    }
+    case 4: {  // up or stop
+      if (inMove()) {
+        stop();
+      } else {
+        moveUp();
+      }
+      break;
+    }
+    case 5: {  // sbs
+      if (inMove()) {
+        stop();
+      } else if (lastDirectionWasOpen()) {
+        moveDown();
+      } else if (lastDirectionWasClose()) {
+        moveUp();
+      } else if (currentPosition < 50) {
+        moveDown();
+      } else {
+        moveUp();
+      }
+      break;
+    }
 
+    default: {
+      if (task >= 10 && task <= 110) {
+        setTargetPosition(task - 10);
+      }
+      break;
+    }
+  }
   return -1;
 }
 
@@ -114,7 +149,7 @@ void RollerShutter::setOpenCloseTime(uint32_t newClosingTimeMs,
     openingTimeMs = newOpeningTimeMs;
     calibrate = true;
     currentPosition = UNKNOWN_POSITION;
-    supla_log(LOG_DEBUG,
+    SUPLA_LOG_DEBUG(
         "RollerShutter[%d] new time settings received. Opening time: %d ms; "
         "closing time: %d ms. Starting calibration...",
         channel.getChannelNumber(),
@@ -172,13 +207,13 @@ void RollerShutter::handleAction(int event, int action) {
       if (inMove()) {
         stop();
       } else if (lastDirectionWasOpen()) {
-        close();
+        moveDown();
       } else if (lastDirectionWasClose()) {
-        open();
+        moveUp();
       } else if (currentPosition < 50) {
-        close();
+        moveDown();
       } else {
-        open();
+        moveUp();
       }
       break;
     }
@@ -251,11 +286,11 @@ void RollerShutter::setTargetPosition(int newPosition) {
   }
 }
 
-bool RollerShutter::lastDirectionWasOpen() {
+bool RollerShutter::lastDirectionWasOpen() const {
   return lastDirection == UP_DIR;
 }
 
-bool RollerShutter::lastDirectionWasClose() {
+bool RollerShutter::lastDirectionWasClose() const {
   return lastDirection == DOWN_DIR;
 }
 
@@ -273,22 +308,22 @@ void RollerShutter::stopMovement() {
 
 void RollerShutter::relayDownOn() {
   Supla::Io::digitalWrite(
-      channel.getChannelNumber(), pinDown, highIsOn ? HIGH : LOW);
+      channel.getChannelNumber(), pinDown, highIsOn ? HIGH : LOW, io);
 }
 
 void RollerShutter::relayUpOn() {
   Supla::Io::digitalWrite(
-      channel.getChannelNumber(), pinUp, highIsOn ? HIGH : LOW);
+      channel.getChannelNumber(), pinUp, highIsOn ? HIGH : LOW, io);
 }
 
 void RollerShutter::relayDownOff() {
   Supla::Io::digitalWrite(
-      channel.getChannelNumber(), pinDown, highIsOn ? LOW : HIGH);
+      channel.getChannelNumber(), pinDown, highIsOn ? LOW : HIGH, io);
 }
 
 void RollerShutter::relayUpOff() {
   Supla::Io::digitalWrite(
-      channel.getChannelNumber(), pinUp, highIsOn ? LOW : HIGH);
+      channel.getChannelNumber(), pinUp, highIsOn ? LOW : HIGH, io);
 }
 
 void RollerShutter::startClosing() {
@@ -310,7 +345,7 @@ void RollerShutter::switchOffRelays() {
 
 void RollerShutter::onTimer() {
   if (millis() - doNothingTime <
-      300) {  // doNothingTime time is used when we change
+      500) {  // doNothingTime time is used when we change
               // direction of roller - to stop for a moment
               // before enabling opposite direction
     return;
@@ -339,7 +374,7 @@ void RollerShutter::onTimer() {
         if (currentDirection == UP_DIR) {
           stopMovement();
         } else if (currentDirection == STOP_DIR) {
-          supla_log(LOG_DEBUG, ("Calibration: closing"));
+          SUPLA_LOG_DEBUG("Calibration: closing");
           calibrationTime = closingTimeMs;
           lastMovementStartTime = millis();
           if (calibrationTime == 0) {
@@ -351,7 +386,7 @@ void RollerShutter::onTimer() {
         if (currentDirection == DOWN_DIR) {
           stopMovement();
         } else if (currentDirection == STOP_DIR) {
-          supla_log(LOG_DEBUG, ("Calibration: opening"));
+          SUPLA_LOG_DEBUG("Calibration: opening");
           calibrationTime = openingTimeMs;
           lastMovementStartTime = millis();
           if (calibrationTime == 0) {
@@ -364,13 +399,13 @@ void RollerShutter::onTimer() {
       // Time used for calibaration is 10% higher then requested by user
       calibrationTime *= 1.1;
       if (calibrationTime > 0) {
-        supla_log(LOG_DEBUG, ("Calibration time: %d"), calibrationTime);
+        SUPLA_LOG_DEBUG("Calibration time: %d", calibrationTime);
       }
     }
 
     if (calibrationTime != 0 &&
         millis() - lastMovementStartTime > calibrationTime) {
-      supla_log(LOG_DEBUG, "Calibration done");
+      SUPLA_LOG_DEBUG("Calibration done");
       calibrationTime = 0;
       calibrate = false;
       if (currentDirection == UP_DIR) {
@@ -485,7 +520,7 @@ void RollerShutter::onLoadState() {
     if (currentPosition >= 0) {
       calibrate = false;
     }
-    supla_log(LOG_DEBUG,
+    SUPLA_LOG_DEBUG(
         "RollerShutter[%d] settings restored from storage. Opening time: %d "
         "ms; closing time: %d ms. Position: %d",
         channel.getChannelNumber(),
@@ -504,9 +539,21 @@ void RollerShutter::onSaveState() {
   Supla::Storage::WriteState((unsigned char *)&data, sizeof(data));
 }
 
-int RollerShutter::getCurrentPosition() {
+int RollerShutter::getCurrentPosition() const {
   return currentPosition;
 }
 
-};  // namespace Control
-};  // namespace Supla
+int RollerShutter::getCurrentDirection() const {
+  return currentDirection;
+}
+
+uint32_t RollerShutter::getClosingTimeMs() const {
+  return closingTimeMs;
+}
+
+uint32_t RollerShutter::getOpeningTimeMs() const {
+  return openingTimeMs;
+}
+
+}  // namespace Control
+}  // namespace Supla

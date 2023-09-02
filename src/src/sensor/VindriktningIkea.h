@@ -28,8 +28,8 @@
 #define VINDRIKTNING_IKEA_BAUDRATE 9600
 
 struct particleSensorState_t {
-  uint16_t avgPM25 = TEMPERATURE_NOT_AVAILABLE;
-  uint16_t measurements[5] = {0, 0, 0, 0, 0};
+  double avgPM25 = TEMPERATURE_NOT_AVAILABLE;
+  double measurements[5] = {0, 0, 0, 0, 0};
   uint8_t measurementIdx = 0;
   boolean valid = false;
 };
@@ -38,7 +38,12 @@ namespace Supla {
 namespace Sensor {
 class VindriktningIkea : public Thermometer {
  public:
+#ifdef ARDUINO_ARCH_ESP32
+  VindriktningIkea(HardwareSerial& serial);
+#else
   VindriktningIkea(int8_t rxPin);
+#endif
+
   double getValue();
   void iterateAlways();
 

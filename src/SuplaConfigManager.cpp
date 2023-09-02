@@ -51,6 +51,10 @@ int ConfigOption::getValueInt() {
   return atoi(this->getValue());
 }
 
+float ConfigOption::getValueFloat() {
+  return atof(this->getValue());
+}
+
 bool ConfigOption::getValueBool() {
   return atoi(this->getValue());
 }
@@ -194,19 +198,10 @@ SuplaConfigManager::SuplaConfigManager() {
 
 #ifdef SUPLA_RELAY
     this->addKey(KEY_MAX_RELAY, "1", 2);
-    this->addKey(KEY_CONDITIONS_SENSOR_TYPE, MAX_GPIO * 2);
-    this->addKey(KEY_CONDITIONS_TYPE, MAX_GPIO * 1);
-    this->addKey(KEY_CONDITIONS_MIN, MAX_GPIO * 4);
-    this->addKey(KEY_CONDITIONS_MAX, MAX_GPIO * 4);
     this->addKey(KEY_VIRTUAL_RELAY, MAX_VIRTUAL_RELAY * 2);
     this->addKey(KEY_VIRTUAL_RELAY_MEMORY, MAX_VIRTUAL_RELAY * 2);
-
 #else
     this->addKey(KEY_MAX_RELAY, 2, false);
-    this->addKey(KEY_CONDITIONS_SENSOR_TYPE, MAX_GPIO * 2, false);
-    this->addKey(KEY_CONDITIONS_TYPE, MAX_GPIO * 1, false);
-    this->addKey(KEY_CONDITIONS_MIN, MAX_GPIO * 4, false);
-    this->addKey(KEY_CONDITIONS_MAX, MAX_GPIO * 4, false);
     this->addKey(KEY_VIRTUAL_RELAY, MAX_GPIO * 2, false);
     this->addKey(KEY_VIRTUAL_RELAY_MEMORY, MAX_GPIO * 2, false);
 
@@ -217,12 +212,20 @@ SuplaConfigManager::SuplaConfigManager() {
     this->addKey(KEY_CONDITIONS_TYPE, MAX_GPIO * 1);
     this->addKey(KEY_CONDITIONS_MIN, MAX_GPIO * 4);
     this->addKey(KEY_CONDITIONS_MAX, MAX_GPIO * 4);
+    this->addKey(KEY_CONDITIONS_SENSOR_NUMBER, "0", MAX_GPIO * 3);
+    this->addKey(KEY_CONDITIONS_CLIENT_TYPE, MAX_GPIO * 2);
+    this->addKey(KEY_CONDITIONS_CLIENT_TYPE_NUMBER, "0", MAX_GPIO * 3);
+    this->addKey(KEY_MAX_CONDITIONS, "1", 2);
 
 #else
     this->addKey(KEY_CONDITIONS_SENSOR_TYPE, MAX_GPIO * 2, false);
     this->addKey(KEY_CONDITIONS_TYPE, MAX_GPIO * 1, false);
     this->addKey(KEY_CONDITIONS_MIN, MAX_GPIO * 4, false);
     this->addKey(KEY_CONDITIONS_MAX, MAX_GPIO * 4, false);
+    this->addKey(KEY_CONDITIONS_SENSOR_NUMBER, MAX_GPIO * 3, false);
+    this->addKey(KEY_CONDITIONS_CLIENT_TYPE, MAX_GPIO * 2, false);
+    this->addKey(KEY_CONDITIONS_CLIENT_TYPE_NUMBER, "0", MAX_GPIO * 3, false);
+    this->addKey(KEY_MAX_CONDITIONS, "1", 2, false);
 #endif
 
 #ifdef SUPLA_BUTTON
@@ -230,13 +233,18 @@ SuplaConfigManager::SuplaConfigManager() {
     this->addKey(KEY_ANALOG_BUTTON, 2 * MAX_ANALOG_BUTTON);
     this->addKey(KEY_ANALOG_INPUT_EXPECTED, 5 * MAX_ANALOG_BUTTON);
     this->addKey(KEY_NUMBER_BUTTON, MAX_GPIO * 2);
-    this->addKey(KEY_AT_HOLD_TIME, "0.45", 4);
+    this->addKey(KEY_AT_HOLD_TIME, DEFAULT_AT_HOLD_TIME, 4);
+    this->addKey(KEY_AT_MULTICLICK_TIME, DEFAULT_AT_MULTICLICK_TIME, 4);
+
+    this->addKey(KEY_NUMBER_BUTTON_ADDITIONAL, 36);
 #else
     this->addKey(KEY_MAX_BUTTON, 2, false);
     this->addKey(KEY_ANALOG_BUTTON, 2 * MAX_ANALOG_BUTTON, false);
     this->addKey(KEY_ANALOG_INPUT_EXPECTED, 5 * MAX_ANALOG_BUTTON, false);
     this->addKey(KEY_NUMBER_BUTTON, MAX_GPIO * 2, false);
-    this->addKey(KEY_AT_HOLD_TIME, "0.45", 4, false);
+    this->addKey(KEY_AT_HOLD_TIME, 4, false);
+    this->addKey(KEY_AT_MULTICLICK_TIME, 4, false);
+    this->addKey(KEY_NUMBER_BUTTON_ADDITIONAL, 36, false);
 #endif
 
 #ifdef SUPLA_LIMIT_SWITCH
@@ -308,13 +316,15 @@ SuplaConfigManager::SuplaConfigManager() {
 #endif
 
 #ifdef SUPLA_PUSHOVER
-    this->addKey(KEY_PUSHOVER_TOKEN, "0", MAX_TOKEN_SIZE);
-    this->addKey(KEY_PUSHOVER_USER, "0", MAX_USER_SIZE);
+    this->addKey(KEY_PUSHOVER_TOKEN, MAX_TOKEN_SIZE);
+    this->addKey(KEY_PUSHOVER_USER, MAX_USER_SIZE);
     this->addKey(KEY_PUSHOVER_MASSAGE, MAX_MESSAGE_SIZE * MAX_PUSHOVER_MESSAGE);
+    this->addKey(KEY_PUSHOVER_SOUND, 3 * MAX_PUSHOVER_MESSAGE);
 #else
     this->addKey(KEY_PUSHOVER_TOKEN, MAX_TOKEN_SIZE, false);
     this->addKey(KEY_PUSHOVER_USER, MAX_USER_SIZE, false);
     this->addKey(KEY_PUSHOVER_MASSAGE, MAX_MESSAGE_SIZE * MAX_PUSHOVER_MESSAGE, false);
+    this->addKey(KEY_PUSHOVER_SOUND, 3 * MAX_PUSHOVER_MESSAGE, false);
 #endif
 
 #ifdef SUPLA_HC_SR04
@@ -345,6 +355,18 @@ SuplaConfigManager::SuplaConfigManager() {
     this->addKey(KEY_ACTIVE_SENSOR, 16, false);
 #endif
 
+#if defined(GUI_SENSOR_I2C_2)
+    this->addKey(KEY_ACTIVE_SENSOR_2, 96);
+#else
+    this->addKey(KEY_ACTIVE_SENSOR_2, 96, false);
+#endif
+
+#if defined(SUPLA_MS5611)
+    this->addKey(KEY_ALTITUDE_MS5611, "0", 4);
+#else
+    this->addKey(KEY_ALTITUDE_MS5611, 4, false);
+#endif
+
 #ifdef SUPLA_DEEP_SLEEP
     this->addKey(KEY_DEEP_SLEEP_TIME, "0", 3);
 #else
@@ -355,12 +377,6 @@ SuplaConfigManager::SuplaConfigManager() {
     this->addKey(KEY_HD44780_TYPE, "2", 1);
 #else
     this->addKey(KEY_HD44780_TYPE, 1, false);
-#endif
-
-#ifdef SUPLA_CONDITIONS
-    this->addKey(KEY_CONDITIONS_SENSOR_NUMBER, "0", MAX_GPIO * 3);
-#else
-    this->addKey(KEY_CONDITIONS_SENSOR_NUMBER, MAX_GPIO * 3, false);
 #endif
 
 #ifdef SUPLA_RF_BRIDGE
@@ -381,12 +397,6 @@ SuplaConfigManager::SuplaConfigManager() {
     this->addKey(KEY_RF_BRIDGE_REPEAT, MAX_BRIDGE_RF * 2, false);
 #endif
 
-#ifdef SUPLA_ACTION_TRIGGER
-    this->addKey(KEY_AT_MULTICLICK_TIME, "0.45", 4);
-#else
-    this->addKey(KEY_AT_MULTICLICK_TIME, 4, false);
-#endif
-
 #ifdef SUPLA_ANALOG_READING_MAP
     this->addKey(KEY_MAX_ANALOG_READING, "1", 2);
 #else
@@ -397,14 +407,16 @@ SuplaConfigManager::SuplaConfigManager() {
 
 #ifdef GUI_SENSOR_I2C_EXPENDER
     this->addKey(KEY_ACTIVE_EXPENDER, 20);
+    this->addKey(KEY_EXPANDER_NUMBER_BUTTON, 96);
 #else
     this->addKey(KEY_ACTIVE_EXPENDER, 20, false);
+    this->addKey(KEY_EXPANDER_NUMBER_BUTTON, 96, false);
 #endif
 
 #if defined(SUPLA_DIRECT_LINKS_SENSOR_THERMOMETR) || defined(SUPLA_DIRECT_LINKS_MULTI_SENSOR)
     this->addKey(KEY_DIRECT_LINKS_TYPE, "0", 3 * MAX_DIRECT_LINK);
     this->addKey(KEY_MAX_DIRECT_LINKS_SENSOR, "0", 2);
-    this->addKey(KEY_DIRECT_LINKS_SENSOR, "0", MAX_DIRECT_LINK * MAX_DIRECT_LINKS_SIZE);
+    this->addKey(KEY_DIRECT_LINKS_SENSOR, MAX_DIRECT_LINK * MAX_DIRECT_LINKS_SIZE);
 
 #else
     this->addKey(KEY_DIRECT_LINKS_TYPE, "0", 3 * MAX_DIRECT_LINK, false);
@@ -412,6 +424,13 @@ SuplaConfigManager::SuplaConfigManager() {
     this->addKey(KEY_DIRECT_LINKS_SENSOR, MAX_DIRECT_LINK * MAX_DIRECT_LINKS_SIZE, false);
 #endif
 
+#ifdef SUPLA_WAKE_ON_LAN
+    this->addKey(KEY_WAKE_ON_LAN_MAX, 2);
+    this->addKey(KEY_WAKE_ON_LAN_MAC, MAX_WAKE_ON_LAN * 18);
+#else
+    this->addKey(KEY_WAKE_ON_LAN_MAX, 2, false);
+    this->addKey(KEY_WAKE_ON_LAN_MAC, MAX_WAKE_ON_LAN * 18, false);
+#endif
     //  this->addKey(KEY_VERSION_CONFIG, String(CURENT_VERSION).c_str(), 2);
 
     SPIFFS.end();

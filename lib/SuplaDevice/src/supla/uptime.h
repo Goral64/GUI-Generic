@@ -14,34 +14,35 @@
  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#ifndef _uptime_h
-#define _uptime_h
+#ifndef SRC_SUPLA_UPTIME_H_
+#define SRC_SUPLA_UPTIME_H_
 
+#include <stdint.h>
 #include "../supla-common/proto.h"
 
 namespace Supla {
 
 class Uptime {
-  public:
-    Uptime();
+ public:
+  Uptime();
 
-    void iterate(unsigned long millis);
-    void resetConnectionUptime();
-    void setConnectionLostCause(unsigned char cause);
+  void iterate(uint32_t millis);
+  void resetConnectionUptime();
+  void setConnectionLostCause(unsigned char cause);
 
-    unsigned _supla_int_t getUptime();
-    unsigned _supla_int_t getConnectionUptime();
-    unsigned char getLastResetCause();
+  unsigned _supla_int_t getUptime() const;
+  unsigned _supla_int_t getConnectionUptime() const;
+  unsigned char getLastResetCause() const;
 
-
-  protected:
-    unsigned long lastMillis;
-    unsigned _supla_int_t deviceUptime;
-    unsigned _supla_int_t connectionUptime;
-    unsigned char lastConnectionResetCause;
-    bool acceptConnectionLostCause;
+ protected:
+  uint32_t lastMillis = 0;;
+  unsigned _supla_int_t deviceUptime = 0;
+  unsigned _supla_int_t connectionUptime = 0;
+  unsigned char lastConnectionResetCause =
+      SUPLA_LASTCONNECTIONRESETCAUSE_UNKNOWN;
+  bool acceptConnectionLostCause = false;
 };
 
-};
+};  // namespace Supla
 
-#endif
+#endif  // SRC_SUPLA_UPTIME_H_

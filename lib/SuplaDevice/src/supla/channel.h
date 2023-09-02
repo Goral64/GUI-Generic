@@ -14,8 +14,8 @@
  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#ifndef _channel_h
-#define _channel_h
+#ifndef SRC_SUPLA_CHANNEL_H_
+#define SRC_SUPLA_CHANNEL_H_
 
 #include <stdint.h>
 
@@ -33,7 +33,7 @@ class Channel : public LocalAction {
   void setNewValue(double temp, double humi);
   void setNewValue(_supla_int_t value);
   void setNewValue(bool value);
-  void setNewValue(TElectricityMeter_ExtendedValue_V2 &emValue);
+  void setNewValue(const TElectricityMeter_ExtendedValue_V2 &emValue);
   void setNewValue(uint8_t red,
                    uint8_t green,
                    uint8_t blue,
@@ -42,6 +42,9 @@ class Channel : public LocalAction {
   void setNewValue(unsigned _supla_int64_t value);
   void setNewValue(const TDSC_RollerShutterValue &value);
   bool setNewValue(char *newValue);
+
+  void setOffline();
+  void setOnline();
 
   double getValueDouble();
   double getValueDoubleFirst();
@@ -55,40 +58,56 @@ class Channel : public LocalAction {
   uint8_t getValueColorBrightness();
   uint8_t getValueBrightness();
 
-  virtual bool isExtended();
-  bool isUpdateReady();
-  int getChannelNumber();
-  _supla_int_t getChannelType();
+  virtual bool isExtended() const;
+  bool isUpdateReady() const;
+  int getChannelNumber() const;
+  _supla_int_t getChannelType() const;
 
   void setType(_supla_int_t type);
   void setDefault(_supla_int_t value);
+  int32_t getDefaultFunction();
   void setFlag(_supla_int_t flag);
   void unsetFlag(_supla_int_t flag);
+  _supla_int_t getFlags() const;
   void setFuncList(_supla_int_t functions);
   _supla_int_t getFuncList();
   void setActionTriggerCaps(_supla_int_t caps);
   _supla_int_t getActionTriggerCaps();
 
   void setValidityTimeSec(unsigned _supla_int_t);
+  void setUpdateReady();
   void clearUpdateReady();
-  virtual void sendUpdate(void *srpc);
+  virtual void sendUpdate();
   virtual TSuplaChannelExtendedValue *getExtValue();
+  // Returns true when value was properly converted to EM value.
+  // "out" has to be valid pointer to allocated structure.
+  virtual bool getExtValueAsElectricityMeter(
+      TElectricityMeter_ExtendedValue_V2 *out);
   void setCorrection(double correction, bool forSecondaryValue = false);
+  bool isSleepingEnabled();
+
+  // Returns true if channel is battery powered (for channel state info)
+  bool isBatteryPowered();
+  // Returns battery level
+  unsigned char getBatteryLevel();
+  // Sets battery level. Setting to 0..100 range will make isBatteryPowered
+  // return true
+  void setBatteryLevel(unsigned char level);
 
   void requestChannelConfig();
 
-  static unsigned long lastCommunicationTimeMs;
+  static uint32_t lastCommunicationTimeMs;
   static TDS_SuplaRegisterDevice_E reg_dev;
 
  protected:
-  void setUpdateReady();
-
   bool valueChanged;
   bool channelConfig;
   int channelNumber;
   unsigned _supla_int_t validityTimeSec;
+  unsigned char batteryLevel = 255;    // 0 - 100%; 255 - not used
+  bool offline = false;
 };
 
 };  // namespace Supla
 
-#endif
+#endif  // SRC_SUPLA_CHANNEL_H_

@@ -20,29 +20,35 @@
 String webContentBuffer;
 
 SuplaWebServer::SuplaWebServer() {
-#ifdef ARDUINO_ARCH_ESP8266
-  httpServer = new ESP8266WebServer(80);
-#ifdef SUPLA_OTA
-  httpUpdater = new ESP8266HTTPUpdateServer();
-  httpUpdater->setup(httpServer, ConfigManager->get(KEY_LOGIN)->getValue(), ConfigManager->get(KEY_LOGIN_PASS)->getValue());
-#endif
-#elif ARDUINO_ARCH_ESP32
-  httpServer = new ESP32WebServer(80);
-#ifdef SUPLA_OTA
-  httpUpdater = new ESP32HTTPUpdateServer();
-  httpUpdater->setup(httpServer, ConfigManager->get(KEY_LOGIN)->getValue(), ConfigManager->get(KEY_LOGIN_PASS)->getValue());
-#endif
-#endif
+  isRunningWebServer = false;
 }
 
 void SuplaWebServer::begin() {
+  if (isRunningWebServer) {
+    return;
+  }
+
+#ifdef ARDUINO_ARCH_ESP8266
+  httpServer = new ESP8266WebServer(80);
+#elif ARDUINO_ARCH_ESP32
+  httpServer = new ESP32WebServer(80);
+#endif
+
+#ifdef SUPLA_OTA
+  httpUpdater = new HTTPUpdateServer();
+  httpUpdater->setup();
+#endif
+
   this->createWebServer();
   httpServer->onNotFound(std::bind(&SuplaWebServer::handleNotFound, this));
   httpServer->begin();
+  isRunningWebServer = true;
 }
 
 void SuplaWebServer::iterateAlways() {
-  httpServer->handleClient();
+  if (isRunningWebServer) {
+    httpServer->handleClient();
+  }
 }
 
 void SuplaWebServer::createWebServer() {
@@ -69,6 +75,10 @@ void SuplaWebServer::createWebServer() {
   createWebPageOther();
 #endif
   createWebPageSensors();
+
+#ifdef SUPLA_CONDITIONS
+  createWebConditions();
+#endif
 }
 
 void SuplaWebServer::sendHeaderStart() {
@@ -99,7 +109,7 @@ void SuplaWebServer::sendHeaderStart() {
     summary.replace(F("{g}"), ConfigManager->get(KEY_SUPLA_GUID)->getValueHex(SUPLA_GUID_SIZE));
     summary.replace(F("{m}"), ConfigESP->getMacAddress(true));
     summary.replace(F("{f}"), String(ESP.getFreeHeap() / 1024.0));
-    if (ConfigESP->configModeESP == NORMAL_MODE) {
+    if (ConfigESP->configModeESP == Supla::DEVICE_MODE_NORMAL) {
       summary.replace(F("{c}"), "NORMAL");
     }
     else {
@@ -149,12 +159,16 @@ void SuplaWebServer::sendContent() {
 }
 
 void SuplaWebServer::handleNotFound() {
+  if (!WebServer->isLoggedIn()) {
+    return;
+  }
   httpServer->sendHeader("Location", PATH_START, true);
-  handlePageHome(2);
+  httpServer->send(302, "text/plane", "");
+  handlePageHome();
 }
 
 bool SuplaWebServer::isLoggedIn(bool force) {
-  if (ConfigESP->configModeESP == NORMAL_MODE || force) {
+  if (ConfigESP->configModeESP == Supla::DEVICE_MODE_NORMAL || force) {
     if (strcmp(ConfigManager->get(KEY_LOGIN)->getValue(), "") != 0 && strcmp(ConfigManager->get(KEY_LOGIN_PASS)->getValue(), "") != 0 &&
         !httpServer->authenticate(ConfigManager->get(KEY_LOGIN)->getValue(), ConfigManager->get(KEY_LOGIN_PASS)->getValue())) {
       httpServer->requestAuthentication();
@@ -165,8 +179,9 @@ bool SuplaWebServer::isLoggedIn(bool force) {
 }
 
 bool SuplaWebServer::saveGPIO(const String& _input, uint8_t function, uint8_t nr, const String& input_max) {
-  uint8_t gpio, _gpio, _function, _nr, current_value, key;
+  uint8_t gpio = OFF_GPIO, _gpio = OFF_GPIO, _function = FUNCTION_OFF, _nr = 0, current_value = 0, key = KEY_GPIO;
   String input;
+  input.reserve(16);
   input = _input + nr;
 
   if (strcmp(WebServer->httpServer->arg(input).c_str(), "") == 0) {
@@ -188,7 +203,7 @@ bool SuplaWebServer::saveGPIO(const String& _input, uint8_t function, uint8_t nr
     }
 
     ConfigManager->setElement(KEY_VIRTUAL_RELAY, nr, true);
-    ConfigManager->setElement(KEY_NUMBER_BUTTON, nr, nr);
+    ConfigESP->setNumberButton(nr);
 
     if (input_max != "\n") {
       current_value = WebServer->httpServer->arg(input_max).toInt();
@@ -253,13 +268,14 @@ bool SuplaWebServer::saveGPIO(const String& _input, uint8_t function, uint8_t nr
       if (gpio == GPIO_VIRTUAL_RELAY) {
         ConfigManager->setElement(KEY_VIRTUAL_RELAY, nr, false);
       }
-      if (function == FUNCTION_BUTTON)
-        ConfigManager->setElement(KEY_NUMBER_BUTTON, nr, nr);
+      if (function == FUNCTION_BUTTON) {
+        ConfigESP->setNumberButton(nr);
+      }
 
 #ifdef SUPLA_ROLLERSHUTTER
       if (ConfigManager->get(KEY_MAX_ROLLERSHUTTER)->getValueInt() * 2 > nr) {
         // if (nr % 2 == 0) {
-        ConfigESP->setEvent(_gpio, Supla::Event::ON_PRESS);
+        ConfigESP->setEvent(_gpio, Supla::GUI::Event::ON_PRESS);
         ConfigESP->setAction(_gpio, Supla::GUI::ActionRolleShutter::OPEN_OR_CLOSE);
         //  }
       }
@@ -291,6 +307,10 @@ bool SuplaWebServer::saveGpioMCP23017(const String& _input, uint8_t function, ui
   uint8_t key, _address, gpio, _gpio, _function, _nr, _type, shiftAddress;
   String input = _input + "mcp" + nr;
 
+  if (nr >= MAX_EXPANDER_FOR_FUNCTION) {
+    return saveGPIO(_input, function, nr, input_max);
+  }
+
   if (strcmp(WebServer->httpServer->arg(input).c_str(), "") == 0) {
     return true;
   }
@@ -299,11 +319,11 @@ bool SuplaWebServer::saveGpioMCP23017(const String& _input, uint8_t function, ui
   ConfigManager->setElement(KEY_ACTIVE_EXPENDER, function, _type);
 
   if (_type == FUNCTION_OFF) {
-    ConfigESP->clearFunctionGpio(function);
+    Expander->clearFunctionGpioExpander(function);
     return true;
   }
 
-  if (_type == EXPENDER_PCF8574) {
+  if (_type == EXPENDER_PCF8574 || _type == EXPENDER_PCF8574_I2C2) {
     shiftAddress = 8;
   }
   else {
@@ -315,34 +335,34 @@ bool SuplaWebServer::saveGpioMCP23017(const String& _input, uint8_t function, ui
   else
     _address = WebServer->httpServer->arg(String(INPUT_ADRESS_MCP23017) + shiftAddress).toInt();
 
-  gpio = ConfigESP->getGpioMCP23017(nr, function);
+  gpio = Expander->getGpioExpander(nr, function);
   _gpio = WebServer->httpServer->arg(input).toInt();
 
-  //  if ((nr == 0 || nr == shiftAddress) && _gpio == OFF_GPIO_EXPENDER)
-  //    return false;
-
   key = KEY_GPIO + _gpio;
-  _function = ConfigManager->get(key)->getElement(ConfigESP->getFunctionMCP23017(_address)).toInt();
-  _nr = ConfigManager->get(key)->getElement(ConfigESP->getNrMCP23017(_address)).toInt();
+  _function = ConfigManager->get(key)->getElement(Expander->getFunctionExpander(_address)).toInt();
+  _nr = ConfigManager->get(key)->getElement(Expander->getNrExpander(_address)).toInt();
 
   if (_gpio == OFF_GPIO_EXPENDER || _address == OFF_ADDRESS_MCP23017) {
-    ConfigESP->clearGpioMCP23017(gpio, nr, function);
+    Expander->clearGpioExpander(gpio, nr, function);
   }
   else if (_function == FUNCTION_OFF) {
-    ConfigESP->clearGpioMCP23017(gpio, nr, function);
-    ConfigESP->clearGpioMCP23017(_gpio, nr, function);
-    ConfigESP->setGpioMCP23017(_gpio, _address, nr, function);
+    Expander->clearGpioExpander(gpio, nr, function);
+    Expander->clearGpioExpander(_gpio, nr, function);
+    Expander->setGpioExpander(_gpio, _address, nr, function);
+
+    if (function == FUNCTION_BUTTON)
+      ConfigESP->setNumberButton(nr);
 #ifdef SUPLA_ROLLERSHUTTER
     if (ConfigManager->get(KEY_MAX_ROLLERSHUTTER)->getValueInt() * 2 > nr) {
       if (nr % 2 == 0) {
-        ConfigESP->setEvent(_gpio, Supla::Event::ON_PRESS);
+        ConfigESP->setEvent(_gpio, Supla::GUI::Event::ON_PRESS);
         ConfigESP->setAction(_gpio, Supla::GUI::ActionRolleShutter::OPEN_OR_CLOSE);
       }
     }
 #endif
   }
   else if (gpio == _gpio && function == _function && nr == _nr) {
-    ConfigESP->setGpioMCP23017(_gpio, _address, nr, function);
+    Expander->setGpioExpander(_gpio, _address, nr, function);
   }
   else {
     return false;

@@ -1,5 +1,8 @@
 {
-	"version": "4.13.13",
+	"version": "5.0.0",
+	"compiler": {
+		"gglib": ["EspSoftwareSerial"]
+	},
 	"Opis struktury": {
 		"SEKCJA": {
 			"SUPLA_OPTION": {
@@ -11,6 +14,7 @@
 				"depOn": "[opcja] tablica SUPLA_OPTION, których włączenie automatycznie włącza daną opcję",
 				"depOff": "[opcja] tablica SUPLA_OPTION, których wyłączenie nie pozwala włączyć danej opcji",
 				"depRel": "[opcja] tablica SULPA_OPTION, które zostaną wyłączone po włączeniu danej opcji",
+				"depOpt": "[opcja] tablica SULPA_OPTION, które zostaną włączone po włączeniu danej opcji",
 				"new": "[opcja] true - oznacz opcję jako nową, false - nie oznaczaj jako nową (domyślnie)",
 				"test": "[opcja] true - oznacz opcję jako testową, false - nie oznaczaj jako testową (domyślnie)",
 				"en": {
@@ -188,6 +192,50 @@
 				"name": "Protocole mDNS",
 				"desc": "L'utilisation du protocole mDNS permet de se connecter au module sans connaître son adresse IP, il suffit de saisir l'adresse du module http://supla.local"
 			}
+		},
+		"SUPLA_WAKE_ON_LAN": {
+			"name": "Wake on LAN",
+			"desc": "Włączanie komputerów poprzez sieć lokalną LAN.",
+			"defOn": false,
+			"new": true,
+			"en": {
+				"name": "Wake on LAN",
+				"desc": "Turning on computers via LAN."
+			},
+			"es": {
+				"name": "Wake on LAN",
+				"desc": "Encendido de computadoras a través de LAN."
+			},
+			"de": {
+				"name": "Wake on LAN",
+				"desc": "Einschalten von Computern über LAN."
+			},
+			"fr": {
+				"name": "Wake on LAN",
+				"desc": "Allumer les ordinateurs via LAN."
+			}
+		},
+		"SUPLA_WT32_ETH01_LAN8720": {
+			"name": "WT32-ETH01",
+			"desc": "WT32-ETH01 to wbudowany moduł szeregowo-ethernetowy oparty na jednostkach MCU WT32-S1 z serii ESP32.",
+			"defOn": false,
+			"new": true,
+			"en": {
+				"name": "WT32-ETH01",
+				"desc": ""
+			},
+			"es": {
+				"name": "WT32-ETH01",
+				"desc": ""
+			},
+			"de": {
+				"name": "WT32-ETH01",
+				"desc": ""
+			},
+			"fr": {
+				"name": "WT32-ETH01",
+				"desc": ""
+			}
 		}
 	},
 	"CONTROL": {
@@ -197,10 +245,8 @@
 			"defOn": false,
 			"depOn": [
 				"SUPLA_ROLLERSHUTTER",
-				"SUPLA_PUSHOVER",
 				"SUPLA_DIRECT_LINKS",
-				"SUPLA_LED",
-				"SUPLA_CONDITIONS"
+				"SUPLA_LED"
 			],
 			"en": {
 				"name": "Relays",
@@ -219,27 +265,6 @@
 				"desc": "Paramètres de l´appareil->Relais. Il permet le fonctionnement des relais."
 			}
 		},
-		"SUPLA_CONDITIONS": {
-			"name": "Warunkowanie przekaźnika",
-			"desc": "Umożliwia sterowanie przekaźnikiem w zależnośći od wartości sensora.",
-			"defOn": false,
-			"en": {
-				"name": "Conditioning of relay",
-				"desc": "It allows you to control the relay depending on the sensor value."
-			},
-			"es": {
-				"name": "Acondicionamiento de relé",
-				"desc": "Le permite controlar el relé en función del valor del sensor."
-			},
-			"de": {
-				"name": "Konditionierung des Relais",
-				"desc": "Damit können Sie das Relais abhängig vom Sensorwert steuern."
-			},
-			"fr": {
-				"name": "Conditionnement de relais",
-				"desc": "Il permet de contrôler le relais en fonction de la valeur du capteur."
-			}
-		},
 		"SUPLA_BUTTON": {
 			"name": "Przyciski",
 			"desc": "Ustawienia urządzenia->Przyciski. Umożliwia obsługę przycisków wraz z innymi funkcjonalnościami.",
@@ -254,6 +279,9 @@
 				"SUPLA_RELAY",
 				"SUPLA_ROLLERSHUTTER",
 				"SUPLA_RGBW",
+				"SUPLA_ACTION_TRIGGER"
+			],
+			"depOpt": [
 				"SUPLA_ACTION_TRIGGER"
 			],
 			"en": {
@@ -330,6 +358,27 @@
 			"fr": {
 				"name": "Interrupteurs de fin de course",
 				"desc": "Paramètres de l´appareil->Interrupteurs de fin de course. Permet le fonctionnement des interrupteurs de fin de course."
+			}
+		},
+		"SUPLA_CONDITIONS": {
+			"name": "Warunkowanie",
+			"desc": "Umożliwia sterowanie różnymi elementami (przekaźnikami, rgbw itd.) w zależnośći od wartości sensora.",
+			"defOn": false,
+			"en": {
+				"name": "Conditioning",
+				"desc": "It allows you to control depending on the sensor value."
+			},
+			"es": {
+				"name": "Acondicionamiento",
+				"desc": "Le permite controlar el relé en función del valor del sensor."
+			},
+			"de": {
+				"name": "Konditionierung",
+				"desc": "Damit können Sie das Relais abhängig vom Sensorwert steuern."
+			},
+			"fr": {
+				"name": "Conditionnement",
+				"desc": "Il permet de contrôler le relais en fonction de la valeur du capteur."
 			}
 		},
 		"SUPLA_LED": {
@@ -782,6 +831,28 @@
 				"desc": "Paramètres de l´appareil->I2C. Capteur d'intensité lumineuse BH1750."
 			}
 		},
+		"SUPLA_MS5611": {
+			"name": "Sensor MS5611",
+			"desc": "Ustawienia urządzenia->I2C. Barometr MS5611",
+			"defOn": false,
+			"new": true,
+			"en": {
+				"name": "MS5611 sensor",
+				"desc": "Device settings->I2C. Barometer MS5611."
+			},
+			"es": {
+				"name": "Sonda MS5611",
+				"desc": "Configuración del dispositivo->I2C. Barometer MS5611."
+			},
+			"de": {
+				"name": "Fühler MS5611",
+				"desc": "Geräteeinstellungen->I2C. Barometer MS5611."
+			},
+			"fr": {
+				"name": "Capteur MS5611",
+				"desc": "Paramètres de l´appareil->I2C. Barometer MS5611."
+			}
+		},
 		"SUPLA_MAX44009": {
 			"name": "Sensor MAX44009",
 			"desc": "Ustawienia urządzenia->I2C. Czujnik natężenia światła MAX44009",
@@ -1004,6 +1075,50 @@
 				"name": "Compteur d´énergie ADE7953",
 				"desc": "Paramètres de l´appareil->I2C. Il permet le fonctionnement du compteur d´énergie ADE7953."
 			}
+		},
+		"SUPLA_MODBUS_SDM_ONE_PHASE": {
+			"name": "Licznik energii SDM Modbus 1F",
+			"desc": "Umożliwia obsługę licznika energii za pomoca protokołu Modbus.",
+			"defOn": false,
+			"new": true,
+			"en": {
+				"name": "Energy meter SDM Modbus 1F",
+				"desc": "It enables the operation of the energy meter SDM Modbus 1F."
+			},
+			"es": {
+				"name": "Contador de energía SDM Modbus 1F",
+				"desc": "Permite el funcionamiento del contador de energía SDM Modbus 1F."
+			},
+			"de": {
+				"name": "Energiezähler SDM Modbus 1F",
+				"desc": "Es ermöglicht den Betrieb des Energiezählers SDM Modbus 1F."
+			},
+			"fr": {
+				"name": "Compteur d´énergie SDM Modbus 1F",
+				"desc": "Il permet le fonctionnement du compteur d´énergie SDM Modbus 1F."
+			}
+		},
+		"SUPLA_MODBUS_SDM": {
+			"name": "Licznik energii SDM Modbus 3F",
+			"desc": "Umożliwia obsługę licznika energii za pomoca protokołu Modbus.",
+			"defOn": false,
+			"new": true,
+			"en": {
+				"name": "Energy meter SDM Modbus 3F",
+				"desc": "It enables the operation of the energy meter SDM Modbus 3F."
+			},
+			"es": {
+				"name": "Contador de energía SDM Modbus 3F",
+				"desc": "Permite el funcionamiento del contador de energía SDM Modbus 3F."
+			},
+			"de": {
+				"name": "Energiezähler SDM Modbus 3F",
+				"desc": "Es ermöglicht den Betrieb des Energiezählers SDM Modbus 3F."
+			},
+			"fr": {
+				"name": "Compteur d´énergie SDM Modbus 3F",
+				"desc": "Il permet le fonctionnement du compteur d´énergie SDM Modbus 3F."
+			}
 		}
 	},
 	"OTHER": {
@@ -1071,9 +1186,12 @@
 			}
 		},
 		"SUPLA_DIRECT_LINKS_SENSOR_THERMOMETR": {
-			"name": "Linki bezpośrednie - odczyt temperatury",
+			"name": "Linki bezpośrednie - odczyt temperatury (stare) ",
 			"desc": "Umożliwia odczytywanie temperatury za pomocą linków bezpośrednich.",
 			"defOn": false,
+			"depRel": [
+				"SUPLA_DIRECT_LINKS_MULTI_SENSOR"
+			],
 			"en": {
 				"name": "Direct links - temperature reading",
 				"desc": "It allows you to read the temperature using direct links."
@@ -1088,6 +1206,31 @@
 			},
 			"fr": {
 				"name": "Liens directs - relevé de température",
+				"desc": "Il vous permet de lire la température à l'aide de liens directs."
+			}
+		},
+		"SUPLA_DIRECT_LINKS_MULTI_SENSOR": {
+			"name": "Linki bezpośrednie - odczyt wartości kanału",
+			"desc": "Umożliwia odczytywanie temperatury za pomocą linków bezpośrednich.",
+			"defOn": false,
+			"new": true,
+			"depRel": [
+				"SUPLA_DIRECT_LINKS_SENSOR_THERMOMETR"
+			],
+			"en": {
+				"name": "Direct links - reading the channel value",
+				"desc": "It allows you to read the temperature using direct links."
+			},
+			"es": {
+				"name": "Enlaces directos - leyendo el valor del canal",
+				"desc": "Le permite leer la temperatura mediante enlaces directos."
+			},
+			"de": {
+				"name": "Direkte Links - Lesen des Kanalwertes",
+				"desc": "Es ermöglicht Ihnen, die Temperatur über direkte Links abzulesen."
+			},
+			"fr": {
+				"name": "Liens directs - lecture de la valeur du canal",
 				"desc": "Il vous permet de lire la température à l'aide de liens directs."
 			}
 		}
@@ -1135,6 +1278,52 @@
 			"fr": {
 				"name": "PMSx003",
 				"desc": "Paramètres de l´appareil->Autre. Capteur de particules : PM1.0, PM2.5, PM10. Capteurs pris en charge PMS1003, PMS3003, PMS5003, PMS5003S, PMS5003T, PMS5003ST, PMS7003, PMSA003."
+			}
+		}
+	},
+	"BONEIO": {
+		"SUPLA_BONEIO_32x10A": {
+			"name": "boneIO 32x10A",
+			"desc": "",
+			"defOn": false,
+			"new": true,
+			"en": {
+				"name": "boneIO 32x10A",
+				"desc": ""
+			},
+			"es": {
+				"name": "boneIO 32x10A",
+				"desc": ""
+			},
+			"de": {
+				"name": "boneIO 32x10A",
+				"desc": ""
+			},
+			"fr": {
+				"name": "boneIO 32x10A",
+				"desc": ""
+			}
+		},
+		"SUPLA_BONEIO_24x16A": {
+			"name": "boneIO 24x16A",
+			"desc": "",
+			"defOn": false,
+			"new": true,
+			"en": {
+				"name": "boneIO 24x16A",
+				"desc": ""
+			},
+			"es": {
+				"name": "boneIO 24x16A",
+				"desc": ""
+			},
+			"de": {
+				"name": "boneIO 24x16A",
+				"desc": ""
+			},
+			"fr": {
+				"name": "boneIO 24x16A",
+				"desc": ""
 			}
 		}
 	},
@@ -1223,6 +1412,13 @@
 			"de": "Stromzähler",
 			"fr": "Compteur d'énergie électrique"
 		}
-
+		,
+		"BONEIO": {
+			"pl": "boneIO",
+			"en": "boneIO",
+			"es": "boneIO",
+			"de": "boneIO",
+			"fr": "boneIO"
+		}
 	}
 }

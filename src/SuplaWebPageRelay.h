@@ -19,11 +19,14 @@
 
 #include "SuplaDeviceGUI.h"
 
+#define INPUT_RELAY_LEVEL    "irl"
+#define INPUT_RELAY_MEMORY   "irm"
+
 #if defined(SUPLA_RELAY) || defined(GUI_SENSOR_I2C_EXPENDER)
 #define GUI_RELAY
 #endif
 
-#define PATH_RELAY_SET        "setrelay"
+#define PATH_RELAY_SET "setrelay"
 
 #ifdef GUI_RELAY
 #define PATH_RELAY     "relay"
@@ -31,8 +34,6 @@
 
 #define INPUT_MAX_RELAY      "mrl"
 #define INPUT_RELAY_GPIO     "rlg"
-#define INPUT_RELAY_LEVEL    "irl"
-#define INPUT_RELAY_MEMORY   "irm"
 #define INPUT_RELAY_DURATION "ird"
 #define INPUT_ROLLERSHUTTER  "irsr"
 
@@ -65,26 +66,11 @@ void handleRelaySetMCP23017(int save = 0);
 void handleRelaySaveSetMCP23017();
 #endif
 
-#ifdef SUPLA_PUSHOVER
-#define INPUT_PUSHOVER_MESSAGE "pm"
-#endif
-
 #ifdef SUPLA_LED
 #define PATH_LED        "led"
 #define PATH_SAVE_LED   "saveled"
 #define INPUT_LED       "led"
 #define INPUT_LEVEL_LED "ill"
-#endif
-
-#ifdef SUPLA_CONDITIONS
-#define INPUT_CONDITIONS_SENSOR_TYPE   "cst"
-#define INPUT_CONDITIONS_TYPE          "ct"
-#define INPUT_CONDITIONS_MIN           "cmi"
-#define INPUT_CONDITIONS_MAX           "cma"
-#define INPUT_CONDITIONS_SENSOR_NUMBER "csc"
-
-void conditionsWebPage(int nr);
-void conditionsWebPageSave(int nr);
 #endif
 
 #ifdef SUPLA_DIRECT_LINKS

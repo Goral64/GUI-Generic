@@ -19,14 +19,23 @@
 #ifdef SUPLA_LIMIT_SWITCH
 void createWebPageLimitSwitch() {
   WebServer->httpServer->on(getURL(PATH_SWITCH), [&]() {
-    if (!WebServer->isLoggedIn()) {
+    if (!WebServer->isLoggedIn())
       return;
-    }
 
     if (WebServer->httpServer->method() == HTTP_GET)
       handleLimitSwitch();
     else
       handleLimitSwitchSave();
+  });
+
+  WebServer->httpServer->on(getURL(PATH_SWITCH_SET), [&]() {
+    if (!WebServer->isLoggedIn())
+      return;
+
+    if (WebServer->httpServer->method() == HTTP_GET)
+      handleLimitSwitchSet();
+    else
+      handleLimitSwitchSaveSet();
   });
 }
 
@@ -44,9 +53,10 @@ void handleLimitSwitch(int save) {
 
   for (nr = 0; nr < ConfigManager->get(KEY_MAX_LIMIT_SWITCH)->getValueInt(); nr++) {
 #ifdef GUI_SENSOR_I2C_EXPENDER
-    addListExpanderBox(webContentBuffer, INPUT_LIMIT_SWITCH_GPIO, S_LIMIT_SWITCH, FUNCTION_LIMIT_SWITCH, nr, PATH_SWITCH);
+    addListExpanderBox(webContentBuffer, INPUT_LIMIT_SWITCH_GPIO, S_LIMIT_SWITCH, FUNCTION_LIMIT_SWITCH, nr, PATH_SWITCH_SET);
 #else
-    addListGPIOBox(webContentBuffer, INPUT_LIMIT_SWITCH_GPIO, S_LIMIT_SWITCH, FUNCTION_LIMIT_SWITCH, nr);
+    addListGPIOLinkBox(webContentBuffer, INPUT_LIMIT_SWITCH_GPIO, S_LIMIT_SWITCH, getParameterRequest(PATH_SWITCH_SET, ARG_PARM_NUMBER),
+                       FUNCTION_LIMIT_SWITCH, nr);
 #endif
   }
   addFormHeaderEnd(webContentBuffer);
@@ -64,7 +74,7 @@ void handleLimitSwitchSave() {
   last_value = ConfigManager->get(KEY_MAX_LIMIT_SWITCH)->getValueInt();
   for (nr = 0; nr <= last_value; nr++) {
 #ifdef GUI_SENSOR_I2C_EXPENDER
-    if (ConfigESP->checkActiveMCP23017(FUNCTION_LIMIT_SWITCH)) {
+    if (Expander->checkActiveExpander(FUNCTION_LIMIT_SWITCH)) {
       if (!WebServer->saveGpioMCP23017(INPUT_LIMIT_SWITCH_GPIO, FUNCTION_LIMIT_SWITCH, nr, INPUT_MAX_LIMIT_SWITCH)) {
         handleLimitSwitch(6);
         return;
@@ -94,6 +104,61 @@ void handleLimitSwitchSave() {
       break;
     case E_CONFIG_FILE_OPEN:
       handleLimitSwitch(2);
+      break;
+  }
+}
+
+void handleLimitSwitchSet(int save) {
+  uint8_t gpio, selected;
+  String nr, url, input;
+
+  nr = WebServer->httpServer->arg(ARG_PARM_NUMBER);
+
+  WebServer->sendHeaderStart();
+
+  if (!nr.isEmpty()) {
+    gpio = ConfigESP->getGpio(nr.toInt(), FUNCTION_LIMIT_SWITCH);
+    url = getParameterRequest(PATH_SWITCH_SET, ARG_PARM_NUMBER, nr);
+
+    webContentBuffer += SuplaSaveResult(save);
+    webContentBuffer += SuplaJavaScript(url);
+
+    addForm(webContentBuffer, F("post"), url);
+    addFormHeader(webContentBuffer, String(S_LIMIT_SWITCH) + S_SPACE + (nr.toInt() + 1));
+
+    selected = ConfigESP->getPullUp(gpio);
+    input = INPUT_LIMIT_SWITCH_PULLUP;
+    addCheckBox(webContentBuffer, input, S_INTERNAL_PULL_UP, selected);
+    addFormHeaderEnd(webContentBuffer);
+  }
+
+  addButtonSubmit(webContentBuffer, S_SAVE);
+  addFormEnd(webContentBuffer);
+
+  addButton(webContentBuffer, S_RETURN, PATH_SWITCH);
+
+  WebServer->sendHeaderEnd();
+}
+
+void handleLimitSwitchSaveSet() {
+  String input, nr;
+  uint8_t gpio;
+
+  nr = WebServer->httpServer->arg(ARG_PARM_NUMBER);
+  gpio = ConfigESP->getGpio(nr.toInt(), FUNCTION_LIMIT_SWITCH);
+
+  input = INPUT_LIMIT_SWITCH_PULLUP;
+  if (strcmp(WebServer->httpServer->arg(input).c_str(), "") != 0)
+    ConfigESP->setPullUp(gpio, 1);
+  else
+    ConfigESP->setPullUp(gpio, 0);
+
+  switch (ConfigManager->save()) {
+    case E_CONFIG_OK:
+      handleLimitSwitchSet(1);
+      break;
+    case E_CONFIG_FILE_OPEN:
+      handleLimitSwitchSet(2);
       break;
   }
 }

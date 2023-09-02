@@ -16,6 +16,7 @@
 
 #include "GUIGenericCommon.h"
 #include "SuplaDeviceGUI.h"
+#include <supla/tools.h>
 
 uint8_t *HexToBytes(String _value) {
   int size = 16;
@@ -51,6 +52,9 @@ uint8_t getCountSensorChannels() {
 
       if (channel->getChannelType() == SUPLA_CHANNELTYPE_ELECTRICITY_METER) {
         maxFrame += 3;
+      }
+      if (channel->getChannelType() == SUPLA_CHANNELTYPE_PRESSURESENSOR) {
+        maxFrame += 1;
       }
     }
 
@@ -92,4 +96,18 @@ void checkRAM() {
     lowestFreeStack = freeStack;
   }
 #endif
+}
+
+const String getAPName() {
+  uint8_t mac[6] = {};
+  char macStr[12 + 6] = {};
+  if (Supla::Network::GetMacAddr(mac)) {
+    generateHexString(mac, macStr, 6);
+  }
+
+  String cstr = "SUPLA-GUI-Generic-";
+  cstr.reserve(32);
+  cstr += macStr;
+
+  return cstr.c_str();
 }

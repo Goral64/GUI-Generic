@@ -19,6 +19,7 @@
 
 #ifdef ARDUINO_ARCH_ESP8266
 #include "FS.h"
+#include <LittleFS.h>
 #elif ARDUINO_ARCH_ESP32
 #include "SPIFFS.h"
 #include <os.h>
@@ -55,12 +56,16 @@
 #define MAX_VIRTUAL_RELAY    10
 #define MAX_BRIDGE_RF        10
 #define MAX_ANALOG_BUTTON    5
+#define MAX_WAKE_ON_LAN      5
 
 #ifdef ARDUINO_ARCH_ESP8266
 #define MAX_GPIO 17
 #elif ARDUINO_ARCH_ESP32
 #define MAX_GPIO 39
 #endif
+
+#define DEFAULT_AT_MULTICLICK_TIME "0.45"
+#define DEFAULT_AT_HOLD_TIME       "0.45"
 
 enum _key
 {
@@ -138,8 +143,20 @@ enum _key
 
   KEY_DIRECT_LINKS_TYPE,
 
-  // KEY_VERSION_CONFIG,
+  KEY_PUSHOVER_SOUND,
 
+  KEY_WAKE_ON_LAN_MAX,
+  KEY_WAKE_ON_LAN_MAC,
+
+  KEY_CONDITIONS_CLIENT_TYPE,
+  KEY_CONDITIONS_CLIENT_TYPE_NUMBER,
+  KEY_MAX_CONDITIONS,
+
+  KEY_EXPANDER_NUMBER_BUTTON,
+  KEY_NUMBER_BUTTON_ADDITIONAL,
+  // KEY_VERSION_CONFIG,
+  KEY_ALTITUDE_MS5611,
+  KEY_ACTIVE_SENSOR_2,
   OPTION_COUNT
 };
 
@@ -207,7 +224,11 @@ enum _function
   FUNCTION_VINDRIKTNING_IKEA,
   FUNCTION_PMSX003_RX,
   FUNCTION_PMSX003_TX,
-  FUNCTION_ADE7953_IRQ
+  FUNCTION_ADE7953_IRQ,
+  FUNCTION_SDM_RX,
+  FUNCTION_SDM_TX,
+  FUNCTION_SDA_2,
+  FUNCTION_SCL_2,
 };
 
 enum _e_onfig
@@ -220,6 +241,18 @@ enum _e_onfig
   E_CONFIG_MAX
 };
 
+enum _button_additional
+{
+  BUTTON_OLED,
+  BUTTON_LCD,
+  BUTTON_ADD_1,
+  BUTTON_ADD_2,
+  BUTTON_ADD_3,
+  BUTTON_ADD_4,
+  BUTTON_ADD_5,
+  BUTTON_RGBW
+};
+
 #define CONFIG_MAX_OPTIONS 200
 
 class ConfigOption {
@@ -228,6 +261,7 @@ class ConfigOption {
   uint8_t getKey();
   const char *getValue();
   int getValueInt();
+  float getValueFloat();
   bool getValueBool();
   const char *getValueHex(size_t size);
   int getValueElement(int element);

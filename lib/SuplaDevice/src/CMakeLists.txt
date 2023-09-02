@@ -13,8 +13,18 @@ set(SRCS
   supla/correction.cpp
   supla/at_channel.cpp
   supla/action_handler.cpp
+  supla/mutex.cpp
+  supla/auto_lock.cpp
+  supla/crc16.cpp
+
+  supla/device/last_state_logger.cpp
+  supla/device/sw_update.cpp
+  supla/device/status_led.cpp
+  supla/device/notifications.cpp
 
   supla/storage/storage.cpp
+  supla/storage/config.cpp
+  supla/storage/key_value.cpp
 
   supla/control/internal_pin_output.cpp
   supla/control/pin_status_led.cpp
@@ -26,9 +36,13 @@ set(SRCS
   supla/control/dimmer_leds.cpp
   supla/control/simple_button.cpp
   supla/control/button.cpp
+  supla/control/sequence_button.cpp
   supla/control/action_trigger.cpp
   supla/control/relay.cpp
   supla/control/virtual_relay.cpp
+  supla/control/roller_shutter.cpp
+  supla/control/bistable_roller_shutter.cpp
+  supla/control/tripple_button_roller_shutter.cpp
 
   supla/condition.cpp
   supla/condition_getter.cpp
@@ -43,12 +57,32 @@ set(SRCS
 
   SuplaDevice.cpp
   supla/network/network.cpp
+  supla/network/web_server.cpp
+  supla/network/html_element.cpp
+  supla/network/html_generator.cpp
+  supla/network/client.cpp
+  supla/network/ip_address.cpp
+  supla/network/html/text_cmd_input_parameter.cpp
+  supla/network/html/select_input_parameter.cpp
+  supla/network/html/rgbw_button_parameters.cpp
+  supla/network/html/button_type_parameters.cpp
+  supla/network/html/button_config_parameters.cpp
+  supla/network/html/button_hold_time_parameters.cpp
+  supla/network/web_sender.cpp
   supla/clock/clock.cpp
+
+  supla/protocol/protocol_layer.cpp
+  supla/protocol/supla_srpc.cpp
+  supla/protocol/mqtt.cpp
+  supla/protocol/mqtt_topic.cpp
 
   supla/sensor/therm_hygro_press_meter.cpp
   supla/sensor/therm_hygro_meter.cpp
   supla/sensor/thermometer.cpp
   supla/sensor/electricity_meter.cpp
+  supla/sensor/binary.cpp
+  supla/sensor/virtual_binary.cpp
+  supla/sensor/impulse_counter.cpp
 )
 
 add_library(supladevicelib SHARED ${SRCS})

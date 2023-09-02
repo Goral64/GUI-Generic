@@ -22,6 +22,8 @@
 #include <supla/storage/storage.h>
 
 using ::testing::Return;
+using ::testing::_;
+using ::testing::AtLeast;
 
 class RgbBaseForTest : public Supla::Control::RGBBase {
   public:
@@ -30,12 +32,28 @@ class RgbBaseForTest : public Supla::Control::RGBBase {
 
 class TimeInterfaceStub : public TimeInterface {
   public:
-    virtual unsigned long millis() override {
-      static unsigned long value = 0;
+    virtual uint32_t millis() override {
+      static uint32_t value = 0;
       value += 1000;
       return value;
     }
 };
+
+class SimpleTime : public TimeInterface {
+  public:
+    SimpleTime() : value(0) {}
+
+    virtual uint32_t millis() override {
+      return value;
+    }
+
+    void advance(int advanceMs) {
+      value += advanceMs;
+    }
+
+    uint32_t value;
+};
+
 
 TEST(RgbTests, InitializationWithDefaultValues) {
   TimeInterfaceStub time;
@@ -71,7 +89,7 @@ TEST(RgbTests, InitializationWithDefaultValues) {
 }
 
 TEST(RgbTests, RgbShouldIgnoreBrightnessValue) {
-  TimeInterfaceStub time;
+  SimpleTime time;
 
   RgbBaseForTest rgb;
 
@@ -80,7 +98,13 @@ TEST(RgbTests, RgbShouldIgnoreBrightnessValue) {
   rgb.setFadeEffectTime(0);
 
   EXPECT_CALL(rgb, setRGBWValueOnDevice(0, 1023, 0, 0, 0)).Times(1);
-  EXPECT_CALL(rgb, setRGBWValueOnDevice((1*1023/255), (2*1023/255), (3*1023/255), (4*1023/100), 0)).Times(1);
+  EXPECT_CALL(rgb,
+              setRGBWValueOnDevice((1 * 1023 / 255),
+                                   (2 * 1023 / 255),
+                                   (3 * 1023 / 255),
+                                   (4 * 1023 / 100),
+                                   0))
+      .Times(1);
 
   EXPECT_EQ(ch->getValueRed(), 0);
   EXPECT_EQ(ch->getValueGreen(), 0);
@@ -88,6 +112,7 @@ TEST(RgbTests, RgbShouldIgnoreBrightnessValue) {
   EXPECT_EQ(ch->getValueColorBrightness(), 0);
   EXPECT_EQ(ch->getValueBrightness(), 0);
 
+  time.advance(1000);
   rgb.onInit();
 
   EXPECT_EQ(ch->getValueRed(), 0);
@@ -96,8 +121,12 @@ TEST(RgbTests, RgbShouldIgnoreBrightnessValue) {
   EXPECT_EQ(ch->getValueColorBrightness(), 0);
   EXPECT_EQ(ch->getValueBrightness(), 0);
 
+  time.advance(1000);
   rgb.iterateAlways();
-  rgb.onTimer();
+  time.advance(1);
+  rgb.onFastTimer();
+  time.advance(1);
+  rgb.onFastTimer();
 
   EXPECT_EQ(ch->getValueRed(), 0);
   EXPECT_EQ(ch->getValueGreen(), 255);
@@ -108,8 +137,10 @@ TEST(RgbTests, RgbShouldIgnoreBrightnessValue) {
   // we call with 5 as brightness - it should be passed as 0 to device and to channel
   rgb.setRGBW(1, 2, 3, 4, 5);
 
+  time.advance(1000);
   rgb.iterateAlways();
-  rgb.onTimer();
+  time.advance(1000);
+  rgb.onFastTimer();
 
   EXPECT_EQ(ch->getValueRed(), 1);
   EXPECT_EQ(ch->getValueGreen(), 2);
@@ -120,15 +151,19 @@ TEST(RgbTests, RgbShouldIgnoreBrightnessValue) {
 }
 
 TEST(RgbTests, HandleActionTests) {
-  // time stub will return +1000 ms on each call to millis
-  TimeInterfaceStub time;
+  SimpleTime time;
 
   RgbBaseForTest rgb;
 
   auto ch = rgb.getChannel();
+  EXPECT_CALL(rgb, setRGBWValueOnDevice(_, _, _, _, _)).Times(AtLeast(1));
 
+  time.advance(1000);
   rgb.setStep(10);
+  rgb.setMinIterationBrightness(10);
+  rgb.setMinMaxIterationDelay(400);
   rgb.onInit();
+  time.advance(1000);
   rgb.iterateAlways();
 
   EXPECT_EQ(ch->getValueRed(), 0);
@@ -137,16 +172,25 @@ TEST(RgbTests, HandleActionTests) {
   EXPECT_EQ(ch->getValueColorBrightness(), 0);
   EXPECT_EQ(ch->getValueBrightness(), 0);
 
+  time.advance(400);
   rgb.handleAction(1, Supla::ITERATE_DIM_ALL);
-  rgb.iterateAlways();
+  for (int i = 0; i < 45; i++) {
+    time.advance(10);
+    rgb.iterateAlways();
+    rgb.onFastTimer();
+  }
   EXPECT_EQ(ch->getValueRed(), 0);
   EXPECT_EQ(ch->getValueGreen(), 255);
   EXPECT_EQ(ch->getValueBlue(), 0);
   EXPECT_EQ(ch->getValueColorBrightness(), 10);
   EXPECT_EQ(ch->getValueBrightness(), 0);
-  
+
   rgb.handleAction(1, Supla::ITERATE_DIM_ALL);
-  rgb.iterateAlways();
+  for (int i = 0; i < 45; i++) {
+    time.advance(10);
+    rgb.iterateAlways();
+    rgb.onFastTimer();
+  }
   EXPECT_EQ(ch->getValueRed(), 0);
   EXPECT_EQ(ch->getValueGreen(), 255);
   EXPECT_EQ(ch->getValueBlue(), 0);
@@ -154,7 +198,11 @@ TEST(RgbTests, HandleActionTests) {
   EXPECT_EQ(ch->getValueBrightness(), 0);
 
   rgb.handleAction(1, Supla::ITERATE_DIM_ALL);
-  rgb.iterateAlways();
+  for (int i = 0; i < 45; i++) {
+    time.advance(10);
+    rgb.iterateAlways();
+    rgb.onFastTimer();
+  }
   EXPECT_EQ(ch->getValueRed(), 0);
   EXPECT_EQ(ch->getValueGreen(), 255);
   EXPECT_EQ(ch->getValueBlue(), 0);
@@ -162,14 +210,16 @@ TEST(RgbTests, HandleActionTests) {
   EXPECT_EQ(ch->getValueBrightness(), 0);
 
   rgb.handleAction(1, Supla::ITERATE_DIM_ALL);
-  rgb.iterateAlways();
+  for (int i = 0; i < 45; i++) {
+    time.advance(10);
+    rgb.iterateAlways();
+    rgb.onFastTimer();
+  }
   EXPECT_EQ(ch->getValueRed(), 0);
   EXPECT_EQ(ch->getValueGreen(), 255);
   EXPECT_EQ(ch->getValueBlue(), 0);
   EXPECT_EQ(ch->getValueColorBrightness(), 40);
   EXPECT_EQ(ch->getValueBrightness(), 0);
-
-  
 }
 
 

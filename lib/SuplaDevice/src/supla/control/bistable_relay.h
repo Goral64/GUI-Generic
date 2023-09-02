@@ -24,8 +24,8 @@
  * information about status of bistable relay.
  */
 
-#ifndef _bistable_relay_h
-#define _bistable_relay_h
+#ifndef SRC_SUPLA_CONTROL_BISTABLE_RELAY_H_
+#define SRC_SUPLA_CONTROL_BISTABLE_RELAY_H_
 
 #include "relay.h"
 
@@ -33,6 +33,14 @@ namespace Supla {
 namespace Control {
 class BistableRelay : public Relay {
  public:
+  BistableRelay(Supla::Io *io,
+                int pin,
+                int statusPin = -1,
+                bool statusPullUp = true,
+                bool statusHighIsOn = true,
+                bool highIsOn = true,
+                _supla_int_t functions =
+                    (0xFF ^ SUPLA_BIT_FUNC_CONTROLLINGTHEROLLERSHUTTER));
   BistableRelay(int pin,
                 int statusPin = -1,
                 bool statusPullUp = true,
@@ -40,28 +48,28 @@ class BistableRelay : public Relay {
                 bool highIsOn = true,
                 _supla_int_t functions =
                     (0xFF ^ SUPLA_BIT_FUNC_CONTROLLINGTHEROLLERSHUTTER));
-  void onInit();
-  void iterateAlways();
-  int handleNewValueFromServer(TSD_SuplaChannelNewValue *newValue);
-  void turnOn(_supla_int_t duration = 0);
-  void turnOff(_supla_int_t duration = 0);
-  void toggle(_supla_int_t duration = 0);
+  void onInit() override;
+  void iterateAlways() override;
+  int handleNewValueFromServer(TSD_SuplaChannelNewValue *newValue) override;
+  void turnOn(_supla_int_t duration = 0) override;
+  void turnOff(_supla_int_t duration = 0) override;
+  void toggle(_supla_int_t duration = 0) override;
 
-  virtual bool isOn();
+  bool isOn() override;
   bool isStatusUnknown();
 
  protected:
   void internalToggle();
 
-  int statusPin;
-  bool statusPullUp;
-  bool statusHighIsOn;
-  unsigned long disarmTimeMs;
-  unsigned long lastReadTime;
-  bool busy;
+  int statusPin = -1;
+  bool statusPullUp = true;
+  bool statusHighIsOn = true;
+  uint32_t disarmTimeMs = 0;
+  uint32_t lastReadTime = 0;
+  bool busy = false;
 };
 
 };  // namespace Control
 };  // namespace Supla
 
-#endif
+#endif  // SRC_SUPLA_CONTROL_BISTABLE_RELAY_H_

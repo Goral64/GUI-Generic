@@ -14,8 +14,8 @@
  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#ifndef _actions_h
-#define _actions_h
+#ifndef SRC_SUPLA_ACTIONS_H_
+#define SRC_SUPLA_ACTIONS_H_
 
 // Actions are used in ActionHandler elements. They are grouped by most common
 // usage, but you should not rely on it. Please check exact supported actions
@@ -25,6 +25,8 @@ namespace Supla {
 enum Action {
   // Relays
   TURN_ON,
+  TURN_ON_WITHOUT_TIMER,  // used with staircase timer function, when
+                          // timer should not be used this time
   TURN_OFF,
   TOGGLE,
 
@@ -88,8 +90,25 @@ enum Action {
   SEND_AT_SHORT_PRESS_x2,
   SEND_AT_SHORT_PRESS_x3,
   SEND_AT_SHORT_PRESS_x4,
-  SEND_AT_SHORT_PRESS_x5
-};
-};
+  SEND_AT_SHORT_PRESS_x5,
 
-#endif /*_actions_h*/
+  // SuplaDevice
+  ENTER_CONFIG_MODE,
+  TOGGLE_CONFIG_MODE,
+  RESET_TO_FACTORY_SETTINGS,
+  SOFT_RESTART,
+  START_LOCAL_WEB_SERVER,
+  STOP_LOCAL_WEB_SERVER,
+  CHECK_SW_UPDATE,
+  LEAVE_CONFIG_MODE_AND_RESET,
+  ENTER_CONFIG_MODE_OR_RESET_TO_FACTORY,
+
+  // Weight sensor
+  TARE_SCALES,
+
+  VOLUME_UP,
+  VOLUME_DOWN
+};
+};  // namespace Supla
+
+#endif  // SRC_SUPLA_ACTIONS_H_

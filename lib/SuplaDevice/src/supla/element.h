@@ -14,10 +14,14 @@
  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
-#ifndef _element_h
-#define _element_h
+#ifndef SRC_SUPLA_ELEMENT_H_
+#define SRC_SUPLA_ELEMENT_H_
+
+#include <supla/protocol/supla_srpc.h>
 
 #include "channel.h"
+
+class SuplaDeviceClass;
 
 namespace Supla {
 
@@ -28,22 +32,32 @@ class Element {
   static Element *begin();
   static Element *last();
   static Element *getElementByChannelNumber(int channelNumber);
+  static bool IsAnyUpdatePending();
+  static bool IsInvalidPtrSet();
+  static void ClearInvalidPtr();
   Element *next();
 
-  // method called during SuplaDevice initialization. I.e. load initial state,
-  // initialize pins etc.
-  virtual void onInit();
+  // First method called on element in SuplaDevice.begin()
+  // Called only if Config Storage class is configured
+  // Element should read its configration in this method
+  virtual void onLoadConfig(SuplaDeviceClass *sdc);
 
+  // Second method called on element in SuplaDevice.begin()
   // method called during Config initialization (i.e. read from EEPROM, FRAM).
   // Called only if Storage class is configured
   virtual void onLoadState();
+
+  // Third method called on element in SuplaDevice.begin()
+  // method called during SuplaDevice initialization. I.e. load initial state,
+  // initialize pins etc.
+  virtual void onInit();
 
   // method called periodically during SuplaDevice iteration
   // Called only if Storage class is configured
   virtual void onSaveState();
 
   // method called each time when device successfully registers to server
-  virtual void onRegistered();
+  virtual void onRegistered(Supla::Protocol::SuplaSrpc *suplaSrpc = nullptr);
 
   // method called on each SuplaDevice iteration (before Network layer
   // iteration). When Device is connected, both iterateAlways() and
@@ -52,7 +66,10 @@ class Element {
 
   // method called on each Supla::Device iteration when Device is connected and
   // registered to Supla server
-  virtual bool iterateConnected(void *srpc);
+  // ptr parameter is left for compatibility reason with previous interface
+  // version
+  virtual bool iterateConnected(void *ptr);
+  virtual bool iterateConnected();
 
   // method called on timer interupt
   // Include all actions that have to be executed periodically regardless of
@@ -64,15 +81,20 @@ class Element {
   // other SuplaDevice activities
   virtual void onFastTimer();
 
+  // method called when soft restart is triggered
+  virtual void onSoftReset();
+
   // return value:
   //  -1 - don't send reply to server
   //  0 - success==false
   //  1 - success==true
   virtual int handleNewValueFromServer(TSD_SuplaChannelNewValue *newValue);
 
+  virtual void fillSuplaChannelNewValue(TSD_SuplaChannelNewValue *value);
+
   // Handles "get channel state" request from server
   // channelState is prefilled with network and device status informations
-  virtual void handleGetChannelState(TDSC_ChannelState &channelState);
+  virtual void handleGetChannelState(TDSC_ChannelState *channelState);
 
   virtual int handleCalcfgFromServer(TSD_DeviceCalCfgRequest *request);
   virtual void handleChannelConfig(TSD_ChannelConfig *result);
@@ -81,13 +103,16 @@ class Element {
   virtual Channel *getChannel();
   virtual Channel *getSecondaryChannel();
 
+  virtual void generateKey(char *, const char *);
+
   Element &disableChannelState();
 
  protected:
   static Element *firstPtr;
+  static bool invalidatePtr;
   Element *nextPtr;
 };
 
 };  // namespace Supla
 
-#endif
+#endif  // SRC_SUPLA_ELEMENT_H_
