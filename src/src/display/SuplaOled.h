@@ -14,12 +14,10 @@
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 
+#ifdef SUPLA_OLED
 #ifndef SuplaOled_H
 #define SuplaOled_H
 
-#include "../../SuplaDeviceGUI.h"
-
-#ifdef SUPLA_OLED
 #include <pgmspace.h>
 #include <supla/action_handler.h>
 #include <supla/element.h>
@@ -30,7 +28,7 @@
 
 enum customActions
 {
-  OLED_TURN_ON,
+  OLED_TURN_ON = 99,
   OLED_NEXT_FRAME
 };
 
@@ -48,7 +46,7 @@ String getTempString(double temperature);
 String getHumidityString(double humidity);
 String getPressureString(double pressure);
 String getDistanceString(double distance);
-int32_t getQuality();
+int getQuality();
 
 void msOverlay(OLEDDisplay* display, OLEDDisplayUiState* state);
 
@@ -58,7 +56,6 @@ void displayUiRelayState(OLEDDisplay* display);
 #endif
 void displayUiSuplaStatus(OLEDDisplay* display);
 void displayUiSuplaClock(OLEDDisplay* display);
-void displayUiConfigMode(OLEDDisplay* display);
 void displayUiBlank(OLEDDisplay* display, OLEDDisplayUiState* state, int16_t x, int16_t y);
 void displayUiGeneral(
     OLEDDisplay* display, OLEDDisplayUiState* state, int16_t x, int16_t y, double value, const String& unit = "\n", const uint8_t* xbm = NULL);
@@ -66,7 +63,6 @@ void displayUiGeneral(
     OLEDDisplay* display, OLEDDisplayUiState* state, int16_t x, int16_t y, const String& value, const String& unit = "\n", const uint8_t* xbm = NULL);
 
 void displayTemperature(OLEDDisplay* display, OLEDDisplayUiState* state, int16_t x, int16_t y);
-void displayDoubleTemperature(OLEDDisplay* display, OLEDDisplayUiState* state, int16_t x, int16_t y);
 void displayDoubleHumidity(OLEDDisplay* display, OLEDDisplayUiState* state, int16_t x, int16_t y);
 void displayPressure(OLEDDisplay* display, OLEDDisplayUiState* state, int16_t x, int16_t y);
 void displayGeneral(OLEDDisplay* display, OLEDDisplayUiState* state, int16_t x, int16_t y);
@@ -74,20 +70,32 @@ void displayDistance(OLEDDisplay* display, OLEDDisplayUiState* state, int16_t x,
 void displayEnergyVoltage(OLEDDisplay* display, OLEDDisplayUiState* state, int16_t x, int16_t y);
 void displayEnergyCurrent(OLEDDisplay* display, OLEDDisplayUiState* state, int16_t x, int16_t y);
 void displayEnergyPowerActive(OLEDDisplay* display, OLEDDisplayUiState* state, int16_t x, int16_t y);
+void displayThermostat(OLEDDisplay* display, OLEDDisplayUiState* state, int16_t x, int16_t y);
 
 Supla::Channel* getChanelByChannelNumber(int channelNumber);
+double getTemperatureFromChannelThermometr(Supla::Channel* channelThermometr);
 
 class SuplaOled : public Supla::ActionHandler, public Supla::Element {
  public:
   SuplaOled();
-  void addButtonOled();
+  void handleAction(int event, int action);
+
+  void enableDisplay(bool isOn);
+  bool isDisplayEnabled() const {
+    return oledON;
+  }
+  int getFrameCount() {
+    return frameCount;
+  }
+  int getCurrentFrame() {
+    if (ui && ui->getUiState()) {
+      return ui->getUiState()->currentFrame;
+    }
+
+    return -1;
+  }
 
  private:
-  void onInit();
-  void iterateAlways();
-  void handleAction(int event, int action);
-  void setupAnimate();
-
   OLEDDisplay* display;
   OLEDDisplayUi* ui;
 
@@ -97,7 +105,15 @@ class SuplaOled : public Supla::ActionHandler, public Supla::Element {
   int overlaysCount = 1;
 
   unsigned long timeLastChangeOled = millis();
-  bool oledON = true;
+  bool oledON;
+
+  void onInit();
+  void iterateAlways();
+  void setupAnimate();
+
+  void setFrameCount(int count) {
+    frameCount = count;
+  }
 };
 
 // https://www.online-utility.org/image/convert/to/XBM
@@ -1877,4 +1893,4 @@ const char utf8_win1250_table[] = {
 };
 #endif
 
-#endif  // SuplaOled_H
+#endif  // SuplaOled_H 

@@ -23,12 +23,13 @@
 #include <supla/storage/config.h>
 #include <supla/storage/storage.h>
 #include <supla/tools.h>
+#include <supla/element.h>
 
 #include <stdio.h>
 
 using Supla::Html::RgbwButtonParameters;
 
-RgbwButtonParameters::RgbwButtonParameters(int id) {
+RgbwButtonParameters::RgbwButtonParameters(int id, const char *labelValue) {
   if (id >= 0) {
     char key[SUPLA_CONFIG_MAX_KEY_SIZE] = {};
     Supla::Config::generateKey(key, id, RgbwButtonTag);
@@ -37,16 +38,45 @@ RgbwButtonParameters::RgbwButtonParameters(int id) {
     setTag(RgbwButtonTag);
   }
 
-  char label[100] = {};
-  if (id >= 0) {
-    snprintf(label, sizeof(label), "#%d RGBW outputs controlled by IN", id);
-  } else {
-    snprintf(label, sizeof(label), "RGBW outputs controlled by IN");
+  auto el = Supla::Element::getElementByChannelNumber(id);
+  int channelType = 0;
+  if (el) {
+    channelType = el->getChannel()->getChannelType();
   }
-  setLabel(label);
 
-  registerValue("RGB+W", 0);
-  registerValue("RGB", 1);
-  registerValue("W", 2);
+  char label[100] = {};
+  if (labelValue != nullptr) {
+    setLabel(labelValue);
+  } else {
+    if (id >= 0) {
+      snprintf(label, sizeof(label), "#%d %s output controlled by IN", id,
+          channelType == SUPLA_CHANNELTYPE_DIMMER ? "Dimmer" :
+          (channelType == SUPLA_CHANNELTYPE_RGBLEDCONTROLLER ? "RGB" :
+           "RGBW"));
+    } else {
+      snprintf(label, sizeof(label), "RGBW output controlled by IN");
+    }
+    setLabel(label);
+  }
+
+  switch (channelType) {
+    case SUPLA_CHANNELTYPE_DIMMER: {
+      registerValue("YES", 2);
+      registerValue("NO", 3);
+      break;
+    }
+    case SUPLA_CHANNELTYPE_RGBLEDCONTROLLER: {
+      registerValue("YES", 1);
+      registerValue("NO", 3);
+      break;
+    }
+    default: {
+      registerValue("RGB+W", 0);
+      registerValue("RGB", 1);
+      registerValue("W", 2);
+      registerValue("NONE", 3);
+      break;
+    }
+  }
 }
 

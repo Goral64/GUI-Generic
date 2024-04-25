@@ -93,8 +93,8 @@ const char HTTP_LOGO[] PROGMEM =
     "102.1,188.6z "
     "M167.7,88.5c-1,0-2.1,0.1-3.1,0.3c-9,1.7-14.2,10.6-10.8,18.6c2.9,6.8,11.4,10.3,19,7.8c7.1-2.3,11.1-9.1,9.6-15.9C180.9,93,174.8,88.5,167.7,88.5z'/"
     "></svg></a>";
-const char HTTP_SUMMARY[] PROGMEM =
-    "<h1>{h}</h1><span>LAST STATE: {s}<br>Firmware: SuplaDevice {v}<br>GUID: {g}<br>MAC: {m}<br>Free Mem: {f}KB<br>Mode: {c}</span>\n";
+// const char HTTP_SUMMARY[] PROGMEM =
+//     "<h1>{h}</h1><span>LAST STATE: {s}<br>Firmware: SuplaDevice {v}<br>GUID: {g}<br>MAC: {m}<br>Free Mem: {f}KB<br>Mode: {c}</span>\n";
 const char HTTP_IFRAMES[] PROGMEM =
     "<div class='dif difl dift'><iframe class='iframe' src='https://gui-generic-builder.supla.io/f.php?tl' onload='ifl(this)'></iframe></div>"
     "<div class='dif difr dift'><iframe class='iframe' src='https://gui-generic-builder.supla.io/f.php?tr' onload='ifl(this)'></iframe></div>"
@@ -225,6 +225,13 @@ const char ADR44_ADR45[] PROGMEM = "0x44 & 0x45";
 const char* const SHT3x_P[] PROGMEM = {OFF, ADR44, ADR45, ADR44_ADR45};
 #endif
 
+#if defined(SUPLA_AHTX0)
+const char ADR38[] PROGMEM = "0x38";
+const char ADR39[] PROGMEM = "0x39";
+const char ADR38_ADR39[] PROGMEM = "0x38 & 0x39";
+const char* const AHTX0_P[] PROGMEM = {OFF, ADR38, ADR39, ADR38_ADR39};
+#endif
+
 #if defined(GUI_SENSOR_I2C_EXPENDER) || defined(SUPLA_LCD_HD44780)
 const char ADR20[] PROGMEM = "0x20";
 const char ADR21[] PROGMEM = "0x21";
@@ -256,12 +263,29 @@ const char* const MEMORY_P[] PROGMEM = {OFF, ON, POSITION_MEMORY};
 
 namespace Supla {
 namespace GUI {
+// INCREASE_TEMPERATURE,
+// DECREASE_TEMPERATURE,
+// INCREASE_HEATING_TEMPERATURE,
+// DECREASE_HEATING_TEMPERATURE,
+// INCREASE_COOLING_TEMPERATURE,
+// DECREASE_COOLING_TEMPERATURE,
+// SWITCH_TO_MANUAL_MODE,
+// SWITCH_TO_WEEKLY_SCHEDULE_MODE,
+// SWITCH_TO_MANUAL_MODE_HEAT,
+// SWITCH_TO_MANUAL_MODE_COOL,
+// SWITCH_TO_MANUAL_MODE_AUTO,
+
 enum Action
 {
   TURN_ON,
   TURN_OFF,
   TOGGLE,
-  AUTOMATIC_STAIRCASE
+  AUTOMATIC_STAIRCASE,
+  INCREASE_TEMPERATURE,
+  DECREASE_TEMPERATURE,
+  TOGGLE_OFF_MANUAL_WEEKLY_SCHEDULE_MODES,
+  TOGGLE_MANUAL_WEEKLY_SCHEDULE_MODES,
+  TOGGLE_MANUAL_WEEKLY_SCHEDULE_MODES_HOLD_OFF
 };
 
 enum Event
@@ -275,10 +299,33 @@ enum Event
 }  // namespace GUI
 }  // namespace Supla
 
-const char* const TRIGGER_P[] PROGMEM = {S_REACTION_ON_PRESS, S_REACTION_ON_RELEASE,    S_REACTION_ON_CHANGE,
-                                         S_REACTION_ON_HOLD,  S_REACTION_MOTION_SENSOR};
+const char* const TRIGGER_P[] PROGMEM = {S_REACTION_ON_PRESS, S_REACTION_ON_RELEASE, S_REACTION_ON_CHANGE, S_REACTION_ON_HOLD,
+                                         S_REACTION_MOTION_SENSOR};
 
+#ifdef SUPLA_THERMOSTAT
+const char* const ACTION_P[] PROGMEM = {
+    ON, OFF, S_TOGGLE, S_REACTION_AUTOMATIC_STAIRCASE, "Zwiększ temperaturę", "Zmniejsz temperaturę", "Wyłącz/Ręczny/Program", "Ręczny/Program", "Przytrzymanie przełącz - Ręczny/Program"};
+#else
 const char* const ACTION_P[] PROGMEM = {ON, OFF, S_TOGGLE, S_REACTION_AUTOMATIC_STAIRCASE};
+#endif
+
+namespace Supla {
+namespace GUI {
+enum ThermostatType
+{
+  THERMOSTAT_OFF,
+  THERMOSTAT_HEAT,
+  THERMOSTAT_COOL,
+  THERMOSTAT_AUTO,
+  THERMOSTAT_DOMESTIC_HOT_WATER,
+  THERMOSTAT_DIFFERENTIAL
+};
+}  // namespace GUI
+}  // namespace Supla
+
+#ifdef SUPLA_THERMOSTAT
+const char* const THERMOSTAT_TYPE_P[] PROGMEM = {S_OFF, S_HEAT, S_COOL, S_AUTO, S_DOMESTIC_HOT_WATER, S_DIFFERENTIAL};
+#endif
 
 #ifdef SUPLA_VL53L0X
 const char* const STATE_VL53L0X_P[] PROGMEM = {OFF, "SENSE DEFAULT", "SENSE LONG RANGE", "SENSE HIGH SPEED", "SENSE HIGH ACCURACY"};
@@ -345,13 +392,15 @@ enum DIRECT_LINKS_TYPE
   DIRECT_LINKS_TYPE_TEMP,
   DIRECT_LINKS_TYPE_TEMP_HYGR,
   DIRECT_LINKS_TYPE_PRESS,
-  DIRECT_LINKS_TYPE_ELECTRICITY_METER,
+  DIRECT_LINKS_TYPE_ONE_PHASE_ELECTRICITY_METER,
   DIRECT_LINKS_TYPE_DISTANCE,
   DIRECT_LINKS_TYPE_DEPTH,
+  DIRECT_LINKS_TYPE_ELECTRICITY_METER,
   DIRECT_LINKS_TYPE_COUNT
 };
 
-const char* const DIRECT_LINKS_TYPE_LIST_P[] PROGMEM = {S_OFF, S_TEMPERATURE, S_TEMP_HYGR, S_PRESS, S_ELECTRICITY_METER, S_DISTANCE, S_DEPTH};
+const char* const DIRECT_LINKS_TYPE_LIST_P[] PROGMEM = {S_OFF,      S_TEMPERATURE, S_TEMP_HYGR,        S_PRESS, S_ELECTRICITY_ONE_PHASE_METER,
+                                                        S_DISTANCE, S_DEPTH,       S_ELECTRICITY_METER};
 #endif
 
 #ifdef SUPLA_PUSHOVER

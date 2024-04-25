@@ -20,7 +20,6 @@
 #define S_BME280                         "BME280"
 #define S_BMP280                         "BMP280"
 #define S_DS18B20                        "DS18B20"
-#define S_MULTI_DS18B20                  "Multi DS18B20"
 #define S_DHT11                          "DHT11"
 #define S_DHT22                          "DHT22"
 #define S_SHT3X                          "SHT3x"
@@ -48,13 +47,19 @@
 #define S_ADE7953                        "ADE7953"
 #define S_MAX44009                       "MAX44009"
 #define S_GPIO                           "GPIO"
+#define S_CC1101                         "CC1101"
+#define S_AHTX0                          "AHT"
+#define S_ANALOG                         "Analog"
 
 //### PIN codes not translated ###
-#define S_D0  "D0"
-#define S_SDA "SDA"
-#define S_SCL "SCL"
-#define S_CLK "CLK"
-#define S_CS  "CS"
+#define S_MISO "D0"
+#define S_SDA  "SDA"
+#define S_SCL  "SCL"
+#define S_CLK  "CLK"
+#define S_CS   "CS"
+#define S_MOSI "MOSI"
+#define S_GDO0 "GDO0"
+#define S_GDO2 "GDO2"
 
 #define S_IP_AP "IP: 192.168.4.1"
 
@@ -63,4 +68,6 @@
 #define S_GG_UPDATER "GUI-GenericUpdater.bin"
 
 #define S_BONEIO "boneIO"
+
+#define S_CELSIUS "°C"
 #endif /* LANGUAGE_COMMON_H_ */

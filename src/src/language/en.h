@@ -35,7 +35,7 @@
 #define S_SENSORS_I2C                                          "SENSORS i2c"
 #define S_SENSORS_SPI                                          "SENSORS SPI"
 #define S_SENSORS_OTHER                                        "SENSORS OTHER"
-#define S_LED_BUTTON_CFG                                       "LED, BUTTON CONFIG"
+#define S_CONFIGURATION                                       "LED, BUTTON CONFIG"
 #define S_CFG_MODE                                             "CFG mode"
 #define S_QUANTITY                                             "QUANTITY"
 #define S_GPIO_SETTINGS_FOR_RELAYS                             "GPIO settings for relays"
@@ -43,6 +43,7 @@
 #define S_RELAY_NR_SETTINGS                                    "Settings relay nr. "
 #define S_STATE_CONTROL                                        "State control"
 #define S_REACTION_AFTER_RESET                                 "Reaction after reset"
+#define S_LIGHT_RELAY                                          "Sterowowanie światłem"
 #define S_GPIO_SETTINGS_FOR_BUTTONS                            "GPIO settings for buttons"
 #define S_BUTTON                                               "Button"
 #define S_BUTTON_NR_SETTINGS                                   "Setting button nr. "
@@ -215,5 +216,25 @@
 #endif
 
 #define S_BAUDRATE "Baudrate"
+
+#ifdef SUPLA_THERMOSTAT
+#define S_HEAT                     "Heat"
+#define S_COOL                     "Cool"
+#define S_AUTO                     "Auto"
+#define S_DOMESTIC_HOT_WATER       "Domestic hot water"
+#define S_DIFFERENTIAL             "Differential"
+#define S_THERMOSTAT               "Thermostat"
+#define S_MAIN_THERMOMETER_CHANNEL "Main thermometrer"
+#define S_AUX_THERMOMETER_CHANNEL  "Aux thermometrer"
+#define S_HISTERESIS               "Histeresis"
+#endif
+
+#ifdef SUPLA_CC1101
+#define S_WMBUS_METER "Meter"
+#define S_WMBUS_SENSOR_TYPE "Sensor type"
+#define S_WMBUS_SENSOR_ID "Sensor id"
+#define S_WMBUS_SENSOR_KEY "Sensor key"
+#define S_WMBUS_SENSOR_PROP "Sensor property"
+#endif
 
 #endif  // _LANGUAGE_EN_S_H_

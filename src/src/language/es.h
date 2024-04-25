@@ -38,7 +38,7 @@
 #define S_SENSORS_I2C                                          "SENSORES i2c"
 #define S_SENSORS_SPI                                          "SENSORES SPI"
 #define S_SENSORS_OTHER                                        "OTROS SENSORES"
-#define S_LED_BUTTON_CFG                                       "LED, CONFIGURACIÓN DE BOTÓN"
+#define S_CONFIGURATION                                       "LED, CONFIGURACIÓN DE BOTÓN"
 #define S_CFG_MODE                                             "Modo"
 #define S_QUANTITY                                             "CANTIDAD"
 #define S_GPIO_SETTINGS_FOR_RELAYS                             "Parámetros GPIO para los relés"
@@ -46,6 +46,7 @@
 #define S_RELAY_NR_SETTINGS                                    "Configuración del relé no. "
 #define S_STATE_CONTROL                                        "Control de estado"
 #define S_REACTION_AFTER_RESET                                 "Reacción después de reinicio"
+#define S_LIGHT_RELAY                                          "Sterowowanie światłem"
 #define S_GPIO_SETTINGS_FOR_BUTTONS                            "Parámetros GPIO para los botones"
 #define S_BUTTON                                               "BOTÓN"
 #define S_BUTTON_NR_SETTINGS                                   "Parámetros del botón no. "
@@ -218,5 +219,25 @@
 #endif
 
 #define S_BAUDRATE "Baudrate"
+
+#ifdef SUPLA_THERMOSTAT
+#define S_HEAT                     "Heat"
+#define S_COOL                     "Cool"
+#define S_DOMESTIC_HOT_WATER       "Domestic hot water"
+#define S_DIFFERENTIAL             "Differential"
+#define S_THERMOSTAT               "Thermostat"
+#define S_THERMOSTAT               "Thermostat"
+#define S_MAIN_THERMOMETER_CHANNEL "Main thermometrer"
+#define S_AUX_THERMOMETER_CHANNEL  "Aux thermometrer"
+#define S_HISTERESIS               "Histeresis"
+#endif
+
+#ifdef SUPLA_CC1101
+#define S_WMBUS_METER "Meter"
+#define S_WMBUS_SENSOR_TYPE "Sensor type"
+#define S_WMBUS_SENSOR_ID "Sensor id"
+#define S_WMBUS_SENSOR_KEY "Sensor key"
+#define S_WMBUS_SENSOR_PROP "Sensor property"
+#endif
 
 #endif  // _LANGUAGE_ES_S_H_

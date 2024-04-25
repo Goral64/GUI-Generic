@@ -18,19 +18,21 @@
 
 #include "SuplaDeviceGUI.h"
 
-#include <supla/channel_element.h>
-#include <supla/sensor/electricity_meter.h>
-
 #if defined(GUI_SENSOR_SPI) || defined(GUI_SENSOR_I2C) || defined(GUI_SENSOR_1WIRE) || defined(GUI_SENSOR_OTHER) || defined(GUI_SENSOR_ANALOG) || \
     defined(SUPLA_RGBW)
 #define GUI_ALL_SENSOR
 #endif
 
-#if defined(GUI_OTHER_ENERGY) || defined(GUI_SENSOR_I2C_ENERGY_METER)
+#if defined(GUI_OTHER_ENERGY) || defined(GUI_SENSOR_I2C_ENERGY_METER) || defined(SUPLA_DIRECT_LINKS_MULTI_SENSOR)
 #define GUI_ALL_ENERGY
 #endif
 
 #ifdef SUPLA_CONDITIONS
+
+#include <supla/channel_element.h>
+#include <supla/sensor/electricity_meter.h>
+#include <supla/element_with_channel_actions.h>
+
 #define PATH_CONDITIONS "conditions"
 
 #define INPUT_CONDITIONING_MAX         "icm"
@@ -104,6 +106,7 @@ enum sensorList
   SENSOR_RELAY,
   SENSOR_MAX44009,
   SENSOR_MS5611,
+  SENSOR_AHTX0,
   COUNT_SENSOR_LIST
 };
 
@@ -138,11 +141,29 @@ namespace Supla {
 namespace GUI {
 namespace Conditions {
 
+struct ConditionsStruct {
+  int functionClient = -1;
+  uint8_t nrClient;
+  Supla::ActionHandler* client = nullptr;
+  int functionSensor = -1;
+  uint8_t nrSensor;
+  Supla::ChannelElement* sensorElement = nullptr;
+  Supla::ElementWithChannelActions* sensorElementWithChannelActions = nullptr;
+  Supla::Sensor::ElectricityMeter* electricityMete = nullptr;
+};
+
 void addConditionsElement();
 void addConditionsExecutive(int functionClient, const char* nameExecutive, Supla::ActionHandler* client, uint8_t nrClient = 0);
 void addConditionsSensor(int functionSensor, const char* nameSensor, Supla::ChannelElement* sensor, uint8_t nrSensor = 0);
+void addConditionsSensor(int functionSensor, const char* nameSensor, Supla::ElementWithChannelActions* sensor, uint8_t nrSensor = 0);
 void addConditionsSensor(int functionSensor, const char* nameSensor, Supla::Sensor::ElectricityMeter* electricityMete, uint8_t nrSensor = 0);
+
 void addConditions();
+void addCondition(ConditionsStruct* condition, uint8_t nr, int actionON, int actionOFF);
+void addConditionForSensorElementWithChannelActions(ConditionsStruct* sensor, uint8_t nr, int actionON, int actionOFF);
+void addConditionForSensor(ConditionsStruct* sensor, uint8_t nr, int actionON, int actionOFF);
+void addConditionForElectricityMeter(ConditionsStruct* electricityMete, uint8_t nr);
+
 }  // namespace Conditions
 }  // namespace GUI
 }  // namespace Supla

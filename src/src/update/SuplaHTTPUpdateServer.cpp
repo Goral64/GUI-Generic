@@ -11,6 +11,7 @@
 
 #ifdef ARDUINO_ARCH_ESP8266
 #include <EEPROM.h>
+#include <flash_hal.h>
 #endif
 
 HTTPUpdateServer::HTTPUpdateServer(bool serial_debug) {
@@ -114,7 +115,7 @@ void HTTPUpdateServer::handleFirmwareUp() {
       }
     }
     if (strcasecmp_P(sCommand.c_str(), PATH_UPDATE_HENDLE_2STEP) == 0) {
-      update = new UpdateURL(String(HOST_BUILDER) + "files/GUI-GenericUploader.bin.gz");
+      update = new UpdateURL(String(HOST_BUILDER) + "files/GUI-GenericUploader.bin");
     }
 
     if (update) {
@@ -159,32 +160,32 @@ void HTTPUpdateServer::handleFirmwareUp() {
 }
 
 void HTTPUpdateServer::suplaWebPageUpddate(int save, const String& location) {
-  webContentBuffer += SuplaSaveResult(save);
-  webContentBuffer += SuplaJavaScript(location);
+  WebServer->sendHeaderStart();
+  SuplaSaveResult(save);
+  SuplaJavaScript(location);
 
 #ifdef OPTIONS_HASH
-  addFormHeader(webContentBuffer, String(S_UPDATE) + S_SPACE + "automatyczna");
-  addButton(webContentBuffer, "Sprawdź aktualizację", getParameterRequest(PATH_UPDATE_HENDLE, ARG_PARM_URL, PATH_UPDATE_CHECK_BUILDER));
-  addButton(webContentBuffer, S_UPDATE_FIRMWARE, getParameterRequest(PATH_UPDATE_HENDLE, ARG_PARM_URL, PATH_UPDATE_BUILDER));
-  addHyperlink(webContentBuffer, "Pobierz", getUpdateBuilderUrl());
-  addFormHeaderEnd(webContentBuffer);
+  addFormHeader(String(S_UPDATE) + S_SPACE + "automatyczna");
+  addButton("Sprawdź aktualizację", getParameterRequest(PATH_UPDATE_HENDLE, ARG_PARM_URL, PATH_UPDATE_CHECK_BUILDER));
+  addButton(S_UPDATE_FIRMWARE, getParameterRequest(PATH_UPDATE_HENDLE, ARG_PARM_URL, PATH_UPDATE_BUILDER));
+  addHyperlink("Pobierz", getUpdateBuilderUrl());
+  addFormHeaderEnd();
 #endif
 
-  addForm(webContentBuffer, F("post"), getParameterRequest(PATH_UPDATE_HENDLE, ARG_PARM_URL, PATH_UPDATE_URL));
-  addFormHeader(webContentBuffer, String(S_UPDATE) + S_SPACE + "OTA URL");
-  addTextBox(webContentBuffer, INPUT_UPDATE_URL, String(S_ADDRESS) + S_SPACE + "URL", S_EMPTY, 0, 600, false);
-  addButtonSubmit(webContentBuffer, S_UPDATE_FIRMWARE);
-  addFormEnd(webContentBuffer);
-  addFormHeaderEnd(webContentBuffer);
+  addForm(F("post"), getParameterRequest(PATH_UPDATE_HENDLE, ARG_PARM_URL, PATH_UPDATE_URL));
+  addFormHeader(String(S_UPDATE) + S_SPACE + "OTA URL");
+  addTextBox(INPUT_UPDATE_URL, String(S_ADDRESS) + S_SPACE + "URL", S_EMPTY, 0, 600, false);
+  addButtonSubmit(S_UPDATE_FIRMWARE);
+  addFormEnd();
+  addFormHeaderEnd();
 
-  addFormHeader(webContentBuffer, String(S_UPDATE) + S_SPACE + "ręczna");
-  webContentBuffer += F("<iframe src='");
-  webContentBuffer += getURL(PATH_UPDATE);
-  webContentBuffer += F("' frameborder='0' width='330' height='200'></iframe>");
-  addFormHeaderEnd(webContentBuffer);
-  addButton(webContentBuffer, S_RETURN, PATH_TOOLS);
-
-  WebServer->sendContent();
+  addFormHeader(String(S_UPDATE) + S_SPACE + "ręczna");
+  WebServer->sendContent(F("<iframe src='"));
+  WebServer->sendContent(getURL(PATH_UPDATE));
+  WebServer->sendContent(F("' frameborder='0' width='330' height='200'></iframe>"));
+  addFormHeaderEnd();
+  addButton(S_RETURN, PATH_TOOLS);
+  WebServer->sendHeaderEnd();
 }
 
 void HTTPUpdateServer::successUpdateManualRefresh() {
@@ -222,7 +223,7 @@ void HTTPUpdateServer::autoUpdate2Step() {
 
   EEPROM.end();
 
-  UpdateURL* update = new UpdateURL(String(HOST_BUILDER) + "files/AutoUploader.bin.gz");
+  UpdateURL* update = new UpdateURL(String(HOST_BUILDER) + "files/AutoUploader.bin");
 
   if (update) {
     switch (update->update()) {
@@ -258,6 +259,7 @@ void HTTPUpdateServer::updateManual() {
   if (!WebServer->isLoggedIn()) {
     return;
   }
+
   // handler for the file upload, get's the sketch bytes, and writes
   // them through the Update object
   HTTPUpload& upload = WebServer->httpServer->upload();
@@ -324,7 +326,6 @@ void HTTPUpdateServer::updateManual() {
   if (!WebServer->isLoggedIn()) {
     return;
   }
-
   HTTPUpload& upload = WebServer->httpServer->upload();
   if (upload.status == UPLOAD_FILE_START) {
     Serial.printf("Update: %s\n", upload.filename.c_str());

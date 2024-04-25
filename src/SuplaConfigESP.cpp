@@ -17,14 +17,19 @@
 #include "SuplaDeviceGUI.h"
 #include <HardwareSerial.h>
 
+#include <Arduino.h>
+
 SuplaConfigESP::SuplaConfigESP() {
   configModeESP = Supla::DEVICE_MODE_NORMAL;
 
   if (ConfigManager->isDeviceConfigured()) {
-    commonReset("SET DEVICE CONFIGURATION!", ResetType::NO_RESET);
-
     if (strcmp(ConfigManager->get(KEY_SUPLA_GUID)->getValue(), "") == 0 || strcmp(ConfigManager->get(KEY_SUPLA_AUTHKEY)->getValue(), "") == 0) {
+      commonReset("SET FIRST DEVICE CONFIGURATION!", ResetType::RESET_FACTORY_DATA);
       ConfigManager->setGUIDandAUTHKEY();
+      ConfigManager->save();
+    }
+    else {
+      commonReset("SET DEVICE CONFIGURATION!", ResetType::RESET_NO_ERASE_DATA);
     }
 
     configModeInit();
@@ -79,7 +84,8 @@ void SuplaConfigESP::addConfigESP(int _pinNumberConfig, int _pinLedConfig) {
 
     Supla::Control::Button *buttonConfig = new Supla::Control::Button(pinNumberConfig, pullUp, invertLogic);
     buttonConfig->setMulticlickTime(450);
-    buttonConfig->addAction(Supla::TURN_ON, *ConfigESP, Supla::ON_CLICK_1);
+    buttonConfig->dontUseOnLoadConfig();
+    buttonConfig->addAction(CONFIG_MODE_RESET, *ConfigESP, Supla::ON_CLICK_1);
 
     if (modeConfigButton == CONFIG_MODE_10_ON_PRESSES) {
       buttonConfig->addAction(CONFIG_MODE_10_ON_PRESSES, *ConfigESP, Supla::ON_CLICK_10);
@@ -93,47 +99,37 @@ void SuplaConfigESP::addConfigESP(int _pinNumberConfig, int _pinLedConfig) {
 
 void SuplaConfigESP::handleAction(int event, int action) {
   if (action == CONFIG_MODE_10_ON_PRESSES) {
-    if (event == Supla::ON_CLICK_10) {
-      configModeInit();
-    }
+    configModeInit();
   }
-  if (action == CONFIG_MODE_5SEK_HOLD) {
-    if (event == Supla::ON_HOLD) {
-      configModeInit();
-    }
+  else if (action == CONFIG_MODE_5SEK_HOLD) {
+    configModeInit();
   }
-
-  if (configModeESP == Supla::DEVICE_MODE_CONFIG) {
-    if (event == Supla::ON_CLICK_1) {
-      rebootESP();
-    }
+  else if (configModeESP == Supla::DEVICE_MODE_CONFIG && action == CONFIG_MODE_RESET) {
+    rebootESP();
   }
 }
 
 void SuplaConfigESP::rebootESP() {
   // WebServer->httpServer->send(302, "text/plain", "");
-  // WebServer->sendContent();
-#ifdef ARDUINO_ARCH_ESP8266
-  WiFi.forceSleepBegin();
-  wdt_reset();
+  Serial.println("Restarting ESP...");
   ESP.restart();
-  while (1) wdt_reset();
-#else
-  ESP.restart();
-#endif
 }
 
 void SuplaConfigESP::configModeInit() {
-  configModeESP = Supla::DEVICE_MODE_CONFIG;
-  ledBlinking(100);
+  if (configModeESP != Supla::DEVICE_MODE_CONFIG) {
+    configModeESP = Supla::DEVICE_MODE_CONFIG;
+    ledBlinking(100);
 
-  Supla::Network::SetConfigMode();
+#ifndef SUPLA_WT32_ETH01_LAN8720
+    Supla::GUI::enableConnectionSSL(false);
+    Supla::GUI::setupConnection();
+#endif
 
-  Supla::GUI::enableConnectionSSL(false);
-  Supla::GUI::setupConnection();
+    Supla::Network::SetConfigMode();
 
-  if (getCountChannels() > 0) {
-    SuplaDevice.enterConfigMode();
+    // if (getCountChannels() > 0) {
+    //   SuplaDevice.enterConfigMode();
+    // }
   }
 }
 
@@ -195,7 +191,7 @@ void SuplaConfigESP::ledBlinkingStop(void) {
 }
 
 String SuplaConfigESP::getMacAddress(bool formating) {
-  byte mac[6];
+  uint8_t mac[6];
   WiFi.macAddress(mac);
   char baseMacChr[18] = {0};
 
@@ -205,6 +201,23 @@ String SuplaConfigESP::getMacAddress(bool formating) {
     sprintf(baseMacChr, "%02X%02X%02X%02X%02X%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 
   return String(baseMacChr);
+}
+
+void SuplaConfigESP::getMacAddress(char *macAddress, bool formating) {
+  uint8_t mac[6];
+  WiFi.macAddress(mac);
+
+  if (formating) {
+    snprintf(macAddress, 18, "%02X:%02X:%02X:%02X:%02X:%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  }
+  else {
+    snprintf(macAddress, 13, "%02X%02X%02X%02X%02X%02X", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+  }
+}
+
+void SuplaConfigESP::getFreeHeapAsString(char* freeHeapStr) {
+  float freeHeap = ESP.getFreeHeap() / 1024.0;
+  snprintf(freeHeapStr, 10, "%.2f", freeHeap);
 }
 
 void ledBlinkingTicker() {
@@ -535,6 +548,14 @@ Supla::Action SuplaConfigESP::getActionInternal(uint8_t gpio) {
       return Supla::Action::TURN_OFF;
     case Supla::GUI::Action::TOGGLE:
       return Supla::Action::TOGGLE;
+    case Supla::GUI::Action::INCREASE_TEMPERATURE:
+      return Supla::Action::INCREASE_TEMPERATURE;
+    case Supla::GUI::Action::DECREASE_TEMPERATURE:
+      return Supla::Action::DECREASE_TEMPERATURE;
+    case Supla::GUI::Action::TOGGLE_MANUAL_WEEKLY_SCHEDULE_MODES:
+      return Supla::Action::TOGGLE_MANUAL_WEEKLY_SCHEDULE_MODES;
+    case Supla::GUI::Action::TOGGLE_OFF_MANUAL_WEEKLY_SCHEDULE_MODES:
+      return Supla::Action::TOGGLE_OFF_MANUAL_WEEKLY_SCHEDULE_MODES;
     default:
       return actionInternal;
   }
@@ -542,6 +563,24 @@ Supla::Action SuplaConfigESP::getActionInternal(uint8_t gpio) {
 
 uint8_t SuplaConfigESP::getEvent(uint8_t gpio) {
   return ConfigManager->get(getKeyGpio(gpio))->getElement(EVENT_BUTTON).toInt();
+}
+
+uint8_t SuplaConfigESP::getLightRelay(uint8_t gpio) {
+  return ConfigManager->get(getKeyGpio(gpio))->getElement(EVENT_BUTTON).toInt();
+}
+
+int SuplaConfigESP::getBrightnessLevelOLED() {
+  int currentBrightness = ConfigManager->get(KEY_OLED_BACK_LIGHT)->getValueInt();
+  return (currentBrightness > 0) ? (currentBrightness + 1) : currentBrightness;
+}
+
+void SuplaConfigESP::setBrightnessLevelOLED(int newBrightness) {
+  if (newBrightness > 0) {
+    ConfigManager->set(KEY_OLED_BACK_LIGHT, newBrightness - 1);
+  }
+  else {
+    ConfigManager->set(KEY_OLED_BACK_LIGHT, newBrightness);
+  }
 }
 
 bool SuplaConfigESP::checkBusyCfg(int gpio, int function) {
@@ -624,10 +663,18 @@ void SuplaConfigESP::setEvent(uint8_t gpio, int event) {
   ConfigManager->setElement(getKeyGpio(gpio), EVENT_BUTTON, event);
 }
 
+void SuplaConfigESP::setLightRelay(uint8_t gpio, int type) {
+  ConfigManager->setElement(getKeyGpio(gpio), EVENT_BUTTON, type);
+}
+
 void SuplaConfigESP::setNumberButton(uint8_t nr, uint8_t nrButton) {
 #ifdef GUI_SENSOR_I2C_EXPENDER
   ConfigManager->setElement(KEY_EXPANDER_NUMBER_BUTTON, nr, nrButton);
 #else
+  // int maxRelayValue = ConfigManager->get(KEY_MAX_RELAY)->getValueInt() - 1;
+  // if (nrButton >= maxRelayValue) {
+  //   nrButton = maxRelayValue;
+  // }
   ConfigManager->setElement(KEY_NUMBER_BUTTON, nr, nrButton);
 #endif
 }
@@ -659,7 +706,7 @@ void SuplaConfigESP::setGpio(uint8_t gpio, uint8_t nr, uint8_t function) {
    */
 }
 
-void SuplaConfigESP::clearGpio(uint8_t gpio, uint8_t function) {
+void SuplaConfigESP::clearGpio(uint8_t gpio, uint8_t function, uint8_t nr) {
   uint8_t key = KEY_GPIO + gpio;
 
   if (function == FUNCTION_CFG_BUTTON) {
@@ -676,6 +723,7 @@ void SuplaConfigESP::clearGpio(uint8_t gpio, uint8_t function) {
   ConfigManager->setElement(key, FUNCTION, FUNCTION_OFF);
 
   if (function == FUNCTION_BUTTON || function == FUNCTION_BUTTON_STOP) {
+    setNumberButton(nr);
     setPullUp(gpio, true);
     setInversed(gpio, true);
 
@@ -685,10 +733,24 @@ void SuplaConfigESP::clearGpio(uint8_t gpio, uint8_t function) {
   if (function == FUNCTION_RELAY) {
     setLevel(gpio, LOW);
     setMemory(gpio, MEMORY_RESTORE);
+
+#ifdef SUPLA_THERMOSTAT
+    ConfigManager->setElement(KEY_THERMOSTAT_TYPE, nr, Supla::GUI::THERMOSTAT_OFF);
+#endif
   }
   if (function == FUNCTION_LIMIT_SWITCH) {
     setPullUp(gpio, true);
   }
+
+  if (gpio == GPIO_VIRTUAL_RELAY) {
+    ConfigManager->setElement(KEY_VIRTUAL_RELAY, nr, false);
+  }
+
+#ifdef ARDUINO_ARCH_ESP8266
+  if (gpio == A0) {
+    ConfigManager->setElement(KEY_ANALOG_BUTTON, nr, false);
+  }
+#endif
 }
 
 uint8_t SuplaConfigESP::countFreeGpio(uint8_t exception) {
@@ -742,13 +804,44 @@ void SuplaConfigESP::commonReset(const char *resetMessage, ResetType resetType, 
 
   Serial.println(resetMessage);
 
-  if (resetType == RESET_FACTORY_DATA) {
+  if (resetType == RESET_FACTORY_DATA || resetType == RESET_DEVICE_DATA) {
     clearEEPROM();
-    ConfigManager->deleteAllValues();
-  }
-  else if (resetType == RESET_DEVICE_DATA) {
-    clearEEPROM();
-    ConfigManager->deleteDeviceValues();
+    if (resetType == RESET_FACTORY_DATA) {
+      ConfigManager->deleteAllValues();
+    }
+    else if (resetType == RESET_DEVICE_DATA) {
+      ConfigManager->deleteDeviceValues();
+    }
+
+#ifdef TEMPLATE_BOARD_JSON
+    if (strcmp(ConfigManager->get(KEY_BOARD)->getValue(), "") == 0) {
+      Supla::TanplateBoard::addTemplateBoard();
+    }
+#elif defined(TEMPLATE_BOARD_OLD)
+    if (strcmp(ConfigManager->get(KEY_BOARD)->getValue(), "") == 0) {
+      chooseTemplateBoard(getDefaultTamplateBoard());
+    }
+#endif
+
+#ifdef SUPLA_BONEIO
+    ConfigESP->setMemory(BONEIO_RELAY_CONFIG, true);
+#ifdef USE_MCP_OUTPUT
+    ConfigESP->setLevel(BONEIO_RELAY_CONFIG, HIGH);
+#else
+    ConfigESP->setLevel(BONEIO_RELAY_CONFIG, LOW);
+#endif
+#else
+    if (resetType == RESET_FACTORY_DATA) {
+      if (ConfigESP->getGpio(FUNCTION_CFG_LED) == OFF_GPIO) {
+        ConfigESP->setGpio(2, FUNCTION_CFG_LED);
+        ConfigESP->setLevel(2, LOW);
+      }
+
+      if (ConfigESP->getGpio(FUNCTION_CFG_BUTTON) == OFF_GPIO) {
+        ConfigESP->setGpio(0, FUNCTION_CFG_BUTTON);
+      }
+    }
+#endif
   }
 
   KeyValuePair keysToUpdate[] = {
@@ -768,34 +861,6 @@ void SuplaConfigESP::commonReset(const char *resetMessage, ResetType resetType, 
       ConfigManager->set(kvp.key, kvp.defaultValue);
     }
   }
-
-  if (ConfigESP->getGpio(FUNCTION_CFG_BUTTON) == OFF_GPIO) {
-    ConfigESP->setGpio(0, FUNCTION_CFG_BUTTON);
-  }
-
-  if (ConfigESP->getGpio(FUNCTION_CFG_LED) == OFF_GPIO) {
-    ConfigESP->setGpio(2, FUNCTION_CFG_LED);
-    ConfigESP->setLevel(2, LOW);
-  }
-
-#ifdef SUPLA_BONEIO
-  ConfigESP->setMemory(BONEIO_RELAY_CONFIG, true);
-#ifdef USE_MCP_OUTPUT
-  ConfigESP->setLevel(BONEIO_RELAY_CONFIG, HIGH);
-#else
-  ConfigESP->setLevel(BONEIO_RELAY_CONFIG, LOW);
-#endif
-#endif
-
-#ifdef TEMPLATE_BOARD_JSON
-  if (strcmp(ConfigManager->get(KEY_BOARD)->getValue(), "") == 0) {
-    Supla::TanplateBoard::addTemplateBoard();
-  }
-#elif defined(TEMPLATE_BOARD_OLD)
-  if (strcmp(ConfigManager->get(KEY_BOARD)->getValue(), "") == 0) {
-    chooseTemplateBoard(getDefaultTamplateBoard());
-  }
-#endif
 
   ConfigManager->save();
 

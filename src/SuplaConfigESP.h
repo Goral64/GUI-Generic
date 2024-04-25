@@ -51,6 +51,7 @@ enum _ConfigMode
 {
   CONFIG_MODE_10_ON_PRESSES,
   CONFIG_MODE_5SEK_HOLD,
+  CONFIG_MODE_RESET,
   FACTORYRESET
 };
 
@@ -72,7 +73,7 @@ typedef struct {
 
 enum ResetType
 {
-  NO_RESET,
+  RESET_NO_ERASE_DATA,
   RESET_DEVICE_DATA,
   RESET_FACTORY_DATA
 };
@@ -98,6 +99,8 @@ class SuplaConfigESP : public Supla::ActionHandler, public Supla::Element {
   void ledBlinkingStop(void);
 
   String getMacAddress(bool formating);
+  void getMacAddress(char *macAddress, bool formating);
+  void getFreeHeapAsString(char *freeHeapStr);
 
   uint8_t configModeESP;
   _supla_status supla_status;
@@ -125,6 +128,10 @@ class SuplaConfigESP : public Supla::ActionHandler, public Supla::Element {
   uint8_t getAction(uint8_t gpio);
   Supla::Action getActionInternal(uint8_t gpio);
   uint8_t getEvent(uint8_t gpio);
+  uint8_t getLightRelay(uint8_t gpio);
+
+  int getBrightnessLevelOLED();
+  void setBrightnessLevelOLED(int newBrightness);
 
   bool checkBusyCfg(int gpio, int function);
   int checkBusyGpio(int gpio, int function);
@@ -139,6 +146,8 @@ class SuplaConfigESP : public Supla::ActionHandler, public Supla::Element {
   void setInversed(uint8_t gpio, int inversed);
   void setAction(uint8_t gpio, int action);
   void setEvent(uint8_t gpio, int event);
+  void setLightRelay(uint8_t gpio, int type);
+
   void setNumberButton(uint8_t nr) {
     setNumberButton(nr, nr);
   }
@@ -149,7 +158,7 @@ class SuplaConfigESP : public Supla::ActionHandler, public Supla::Element {
     setGpio(gpio, 0, function);
   }
 
-  void clearGpio(uint8_t gpio, uint8_t function = 0);
+  void clearGpio(uint8_t gpio, uint8_t function = 0, uint8_t nr = 0);
 
   void commonReset(const char *resetMessage, ResetType resetType, bool forceReset = false);
 

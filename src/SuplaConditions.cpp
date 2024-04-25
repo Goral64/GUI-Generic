@@ -35,46 +35,46 @@ void createWebConditions() {
 
 void handleConditions(int save) {
   WebServer->sendHeaderStart();
-  webContentBuffer += SuplaSaveResult(save);
-  webContentBuffer += SuplaJavaScript(PATH_CONDITIONS);
+  SuplaSaveResult(save);
+  SuplaJavaScript(PATH_CONDITIONS);
 
-  addForm(webContentBuffer, F("post"), PATH_CONDITIONS);
+  addForm(F("post"), PATH_CONDITIONS);
   if (COUNT_SENSOR_LIST > 1) {
-    addFormHeader(webContentBuffer, S_CONDITIONING);
-    addNumberBox(webContentBuffer, INPUT_CONDITIONING_MAX, S_QUANTITY, KEY_MAX_CONDITIONS, 10);
-    addFormHeaderEnd(webContentBuffer);
+    addFormHeader(S_CONDITIONING);
+    addNumberBox(INPUT_CONDITIONING_MAX, S_QUANTITY, KEY_MAX_CONDITIONS, 10);
+    addFormHeaderEnd();
 
     for (uint8_t nr = 0; nr < ConfigManager->get(KEY_MAX_CONDITIONS)->getValueInt(); nr++) {
-      addFormHeader(webContentBuffer, String(S_CONDITION) + S_SPACE + (nr + 1));
+      addFormHeader(String(S_CONDITION) + S_SPACE + (nr + 1));
       uint8_t selected = ConfigManager->get(KEY_CONDITIONS_CLIENT_TYPE)->getElement(nr).toInt();
 
-      addListBox(webContentBuffer, String(INPUT_CONDITIONS_TYPE_CLIENT) + nr, "Wykonaj dla", CONDITIONS_EXECUTIVE_TYPE_LIST, COUNT_EXECUTIVE_LIST,
+      addListBox(String(INPUT_CONDITIONS_TYPE_CLIENT) + nr, "Wykonaj dla", CONDITIONS_EXECUTIVE_TYPE_LIST, COUNT_EXECUTIVE_LIST,
                  selected, 0, false);
 
       selected = ConfigManager->get(KEY_CONDITIONS_CLIENT_TYPE_NUMBER)->getElement(nr).toInt();
-      addListNumbersBox(webContentBuffer, String(INPUT_CONDITIONS_CLIENT_NUMBER) + nr, "Numer", 20, selected);
+      addListNumbersBox(String(INPUT_CONDITIONS_CLIENT_NUMBER) + nr, "Numer", 20, selected);
 
       selected = ConfigManager->get(KEY_CONDITIONS_SENSOR_TYPE)->getElement(nr).toInt();
-      addListBox(webContentBuffer, String(INPUT_CONDITIONS_SENSOR_TYPE) + nr, "Sensor", CONDITIONS_SENSOR_LIST, COUNT_SENSOR_LIST, selected, 0,
+      addListBox(String(INPUT_CONDITIONS_SENSOR_TYPE) + nr, "Sensor", CONDITIONS_SENSOR_LIST, COUNT_SENSOR_LIST, selected, 0,
                  false);
 
       selected = ConfigManager->get(KEY_CONDITIONS_SENSOR_NUMBER)->getElement(nr).toInt();
-      addListNumbersBox(webContentBuffer, String(INPUT_CONDITIONS_SENSOR_NUMBER) + nr, "Numer", 20, selected);
+      addListNumbersBox(String(INPUT_CONDITIONS_SENSOR_NUMBER) + nr, "Numer", 20, selected);
 
       selected = ConfigManager->get(KEY_CONDITIONS_TYPE)->getElement(nr).toInt();
-      addListBox(webContentBuffer, String(INPUT_CONDITIONS_TYPE) + nr, "Jeżeli wartość", CONDITIONS_TYPE_P, CONDITION_COUNT, selected, 0, false);
+      addListBox(String(INPUT_CONDITIONS_TYPE) + nr, "Jeżeli wartość", CONDITIONS_TYPE_P, CONDITION_COUNT, selected, 0, false);
 
       String value = ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr);
-      addNumberBox(webContentBuffer, String(INPUT_CONDITIONS_MIN) + nr, S_ON, S_SWITCH_ON_VALUE, false, value, false);
+      addNumberBox(String(INPUT_CONDITIONS_MIN) + nr, S_ON, S_SWITCH_ON_VALUE, false, value, false);
       value = ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr);
-      addNumberBox(webContentBuffer, String(INPUT_CONDITIONS_MAX) + nr, S_OFF, S_SWITCH_OFF_VALUE, false, value, false);
-      addFormHeaderEnd(webContentBuffer);
+      addNumberBox(String(INPUT_CONDITIONS_MAX) + nr, S_OFF, S_SWITCH_OFF_VALUE, false, value, false);
+      addFormHeaderEnd();
     }
   }
 
-  addButtonSubmit(webContentBuffer, S_SAVE);
-  addFormEnd(webContentBuffer);
-  addButton(webContentBuffer, S_RETURN, PATH_DEVICE_SETTINGS);
+  addButtonSubmit(S_SAVE);
+  addFormEnd();
+  addButton(S_RETURN, PATH_DEVICE_SETTINGS);
 
   WebServer->sendHeaderEnd();
 }
@@ -84,16 +84,16 @@ void handleConditionsSave() {
     String input = INPUT_CONDITIONS_TYPE_CLIENT;
     input += nr;
     Serial.println(input);
-    ConfigManager->setElement(KEY_CONDITIONS_CLIENT_TYPE, nr, WebServer->httpServer->arg(input).toInt());
+    ConfigManager->setElement(KEY_CONDITIONS_CLIENT_TYPE, nr, static_cast<int>(WebServer->httpServer->arg(input).toInt()));
     input = INPUT_CONDITIONS_CLIENT_NUMBER;
     input += nr;
-    ConfigManager->setElement(KEY_CONDITIONS_CLIENT_TYPE_NUMBER, nr, WebServer->httpServer->arg(input).toInt());
+    ConfigManager->setElement(KEY_CONDITIONS_CLIENT_TYPE_NUMBER, nr, static_cast<int>(WebServer->httpServer->arg(input).toInt()));
     input = INPUT_CONDITIONS_SENSOR_TYPE;
     input += nr;
-    ConfigManager->setElement(KEY_CONDITIONS_SENSOR_TYPE, nr, WebServer->httpServer->arg(input).toInt());
+    ConfigManager->setElement(KEY_CONDITIONS_SENSOR_TYPE, nr, static_cast<int>(WebServer->httpServer->arg(input).toInt()));
     input = INPUT_CONDITIONS_TYPE;
     input += nr;
-    ConfigManager->setElement(KEY_CONDITIONS_TYPE, nr, WebServer->httpServer->arg(input).toInt());
+    ConfigManager->setElement(KEY_CONDITIONS_TYPE, nr, static_cast<int>(WebServer->httpServer->arg(input).toInt()));
     input = INPUT_CONDITIONS_MIN;
     input += nr;
     ConfigManager->setElement(KEY_CONDITIONS_MIN, nr, WebServer->httpServer->arg(input).c_str());
@@ -120,16 +120,6 @@ void handleConditionsSave() {
 namespace Supla {
 namespace GUI {
 namespace Conditions {
-
-struct ConditionsStruct {
-  int functionClient = -1;
-  uint8_t nrClient;
-  Supla::ActionHandler *client = nullptr;
-  int functionSensor = -1;
-  uint8_t nrSensor;
-  Supla::ChannelElement *sensor = nullptr;
-  Supla::Sensor::ElectricityMeter *electricityMete = nullptr;
-};
 
 ConditionsStruct *conditions = nullptr;
 
@@ -177,9 +167,29 @@ void addConditionsSensor(int functionSensor, const char *nameSensor, Supla::Chan
 
   for (uint8_t nr = 0; nr < ConfigManager->get(KEY_MAX_CONDITIONS)->getValueInt(); nr++) {
     if (conditions[nr].functionSensor == functionSensor && conditions[nr].nrSensor == nrSensor) {
-      conditions[nr].sensor = sensor;
+      conditions[nr].sensorElement = sensor;
 
       Serial.print("addConditionsSensor: ");
+      Serial.print("functionClient: ");
+      Serial.print(conditions[nr].functionClient);
+      Serial.print(", nrClient: ");
+      Serial.print(conditions[nr].nrClient);
+      Serial.print(" functionSensor: ");
+      Serial.print(conditions[nr].functionSensor);
+      Serial.print(", nrSensor : ");
+      Serial.println(conditions[nr].nrSensor);
+    }
+  }
+}
+
+void addConditionsSensor(int functionSensor, const char *nameSensor, Supla::ElementWithChannelActions *sensor, uint8_t nrSensor) {
+  CONDITIONS_SENSOR_LIST[functionSensor] = nameSensor;
+
+  for (uint8_t nr = 0; nr < ConfigManager->get(KEY_MAX_CONDITIONS)->getValueInt(); nr++) {
+    if (conditions[nr].functionSensor == functionSensor && conditions[nr].nrSensor == nrSensor) {
+      conditions[nr].sensorElementWithChannelActions = sensor;
+
+      Serial.print("addConditionsSensorElementWithChannelActions: ");
       Serial.print("functionClient: ");
       Serial.print(conditions[nr].functionClient);
       Serial.print(", nrClient: ");
@@ -213,140 +223,215 @@ void addConditionsSensor(int functionSensor, const char *nameSensor, Supla::Sens
 }
 
 void addConditions() {
-  int actionON = Supla::TURN_ON;
-  int actionOFF = Supla::TURN_OFF;
-
   for (uint8_t nr = 0; nr < ConfigManager->get(KEY_MAX_CONDITIONS)->getValueInt(); nr++) {
-    /////// Warunkowanie dla sensorów //////
-    if (conditions[nr].client != nullptr && conditions[nr].sensor != nullptr) {
+    if (conditions[nr].client != nullptr) {
+      int actionON = Supla::TURN_ON;
+      int actionOFF = Supla::TURN_OFF;
+
       if (ConfigManager->get(KEY_CONDITIONS_CLIENT_TYPE)->getElement(nr).toInt() == CONDITIONS::EXECUTIVE_ROLLER_SHUTTER) {
         actionON = Supla::OPEN;
         actionOFF = Supla::CLOSE;
       }
 
-      if (strcmp(ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).c_str(), "") != 0) {
-        Serial.print("addConditions MIN: ");
-        Serial.println(ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).c_str());
-
-        double threshold = ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).toDouble();
-        conditions[nr].sensor->addAction(actionOFF, conditions[nr].client, OnInvalid());
-
-        switch (ConfigManager->get(KEY_CONDITIONS_TYPE)->getElement(nr).toInt()) {
-          case CONDITION_ON_LESS:
-            conditions[nr].sensor->addAction(actionON, conditions[nr].client, OnLessEq(threshold));
-            break;
-          case CONDITION_ON_GREATER:
-            conditions[nr].sensor->addAction(actionON, conditions[nr].client, OnGreaterEq(threshold));
-            break;
-          case CONDITION_ON_LESS_HUMIDITY:
-            conditions[nr].sensor->addAction(actionON, conditions[nr].client, OnLessEq(threshold, true));
-            break;
-          case CONDITION_ON_GREATER_HUMIDITY:
-            conditions[nr].sensor->addAction(actionON, conditions[nr].client, OnGreaterEq(threshold, true));
-            break;
-          case CONDITION_GPIO:
-            if (threshold == 0) {
-	            actionON = Supla::TURN_OFF;
-            }
-            conditions[nr].sensor->addAction(actionON, conditions[nr].client, Supla::ON_TURN_ON);
-            break;
-        }
-      }
-
-      if (strcmp(ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).c_str(), "") != 0) {
-        Serial.print("addConditions MAX: ");
-        Serial.println(ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).c_str());
-
-        double threshold = ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).toDouble();
-        conditions[nr].sensor->addAction(actionOFF, conditions[nr].client, OnInvalid());
-
-        switch (ConfigManager->get(KEY_CONDITIONS_TYPE)->getElement(nr).toInt()) {
-          case CONDITION_ON_LESS:
-            conditions[nr].sensor->addAction(actionOFF, conditions[nr].client, OnGreaterEq(threshold));
-            break;
-          case CONDITION_ON_GREATER:
-            conditions[nr].sensor->addAction(actionOFF, conditions[nr].client, OnLessEq(threshold));
-            break;
-          case CONDITION_ON_LESS_HUMIDITY:
-            conditions[nr].sensor->addAction(actionOFF, conditions[nr].client, OnGreaterEq(threshold, true));
-            break;
-          case CONDITION_ON_GREATER_HUMIDITY:
-            conditions[nr].sensor->addAction(actionOFF, conditions[nr].client, OnLessEq(threshold, true));
-            break;
-          case CONDITION_GPIO:
-            if (threshold == 1) {
-	            actionOFF = Supla::TURN_ON;
-            }
-            conditions[nr].sensor->addAction(actionOFF, conditions[nr].client, Supla::ON_TURN_OFF);
-            break;
-        }
-      }
-    }
-
-    /////// Warunkowanie dla liczników energii //////
-    if (conditions[nr].client != nullptr && conditions[nr].electricityMete != nullptr) {
-      if (strcmp(ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).c_str(), "") != 0) {
-        Serial.print("addConditions MIN - ElectricityMeter: ");
-        Serial.println(ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).c_str());
-
-        double threshold = ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).toDouble();
-        // conditions[nr].electricityMete->addAction(Supla::TURN_OFF, conditions[nr].client, OnInvalid());
-
-        switch (ConfigManager->get(KEY_CONDITIONS_TYPE)->getElement(nr).toInt()) {
-          case CONDITION_ON_LESS_VOLTAGE:
-            conditions[nr].electricityMete->addAction(Supla::TURN_ON, conditions[nr].client, OnLessEq(threshold, EmVoltage()));
-            break;
-          case CONDITION_ON_LESS_CURRENT:
-            conditions[nr].electricityMete->addAction(Supla::TURN_ON, conditions[nr].client, OnLessEq(threshold, EmTotalCurrent()));
-            break;
-          case CONDITION_ON_LESS_POWER_ACTIVE:
-            conditions[nr].electricityMete->addAction(Supla::TURN_ON, conditions[nr].client, OnLessEq(threshold, EmTotalPowerActiveW()));
-            break;
-
-          case CONDITION_ON_GREATER_VOLTAGE:
-            conditions[nr].electricityMete->addAction(Supla::TURN_ON, conditions[nr].client, OnGreaterEq(threshold, EmVoltage()));
-            break;
-          case CONDITION_ON_GREATER_CURRENT:
-            conditions[nr].electricityMete->addAction(Supla::TURN_ON, conditions[nr].client, OnGreaterEq(threshold, EmTotalCurrent()));
-            break;
-          case CONDITION_ON_GREATER_POWER_ACTIVE:
-            conditions[nr].electricityMete->addAction(Supla::TURN_ON, conditions[nr].client, OnGreaterEq(threshold, EmTotalPowerActiveW()));
-            break;
-        }
-      }
-
-      if (strcmp(ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).c_str(), "") != 0) {
-        Serial.print("addConditions MAX - ElectricityMeter: ");
-        Serial.println(ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).c_str());
-
-        double threshold = ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).toDouble();
-        //   conditions[nr].electricityMete->addAction(Supla::TURN_OFF, conditions[nr].client, OnInvalid());
-
-        switch (ConfigManager->get(KEY_CONDITIONS_TYPE)->getElement(nr).toInt()) {
-          case CONDITION_ON_LESS_VOLTAGE:
-            conditions[nr].electricityMete->addAction(Supla::TURN_OFF, conditions[nr].client, OnGreaterEq(threshold, EmVoltage()));
-            break;
-          case CONDITION_ON_LESS_CURRENT:
-            conditions[nr].electricityMete->addAction(Supla::TURN_OFF, conditions[nr].client, OnGreaterEq(threshold, EmTotalCurrent()));
-            break;
-          case CONDITION_ON_LESS_POWER_ACTIVE:
-            conditions[nr].electricityMete->addAction(Supla::TURN_OFF, conditions[nr].client, OnGreaterEq(threshold, EmTotalPowerActiveW()));
-            break;
-
-          case CONDITION_ON_GREATER_VOLTAGE:
-            conditions[nr].electricityMete->addAction(Supla::TURN_OFF, conditions[nr].client, OnLessEq(threshold, EmVoltage()));
-            break;
-          case CONDITION_ON_GREATER_CURRENT:
-            conditions[nr].electricityMete->addAction(Supla::TURN_OFF, conditions[nr].client, OnLessEq(threshold, EmTotalCurrent()));
-            break;
-          case CONDITION_ON_GREATER_POWER_ACTIVE:
-            conditions[nr].electricityMete->addAction(Supla::TURN_OFF, conditions[nr].client, OnLessEq(threshold, EmTotalPowerActiveW()));
-            break;
-        }
-      }
+      addCondition(&conditions[nr], nr, actionON, actionOFF);
     }
   }
 }
+
+void addCondition(ConditionsStruct *condition, uint8_t nr, int actionON, int actionOFF) {
+  if (condition->sensorElementWithChannelActions != nullptr) {
+    addConditionForSensorElementWithChannelActions(condition, nr, actionON, actionOFF);
+  }
+  else if (condition->sensorElement != nullptr) {
+    addConditionForSensor(condition, nr, actionON, actionOFF);
+  }
+  else if (condition->electricityMete != nullptr) {
+    addConditionForElectricityMeter(condition, nr);
+  }
+}
+
+void addConditionForSensorElementWithChannelActions(ConditionsStruct *sensor, uint8_t nr, int actionON, int actionOFF) {
+  if (strcmp(ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).c_str(), "") != 0) {
+    Serial.print("addConditionForSensorElementWithChannelActions MIN: ");
+    Serial.println(ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).c_str());
+
+    double threshold = ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).toDouble();
+    sensor->sensorElementWithChannelActions->addAction(actionOFF, sensor->client, OnInvalid());
+
+    switch (ConfigManager->get(KEY_CONDITIONS_TYPE)->getElement(nr).toInt()) {
+      case CONDITION_ON_LESS:
+        sensor->sensorElementWithChannelActions->addAction(actionON, sensor->client, OnLessEq(threshold));
+        break;
+      case CONDITION_ON_GREATER:
+        sensor->sensorElementWithChannelActions->addAction(actionON, sensor->client, OnGreaterEq(threshold));
+        break;
+      case CONDITION_ON_LESS_HUMIDITY:
+        sensor->sensorElementWithChannelActions->addAction(actionON, sensor->client, OnLessEq(threshold, true));
+        break;
+      case CONDITION_ON_GREATER_HUMIDITY:
+        sensor->sensorElementWithChannelActions->addAction(actionON, sensor->client, OnGreaterEq(threshold, true));
+        break;
+      case CONDITION_GPIO:
+        if (threshold == 0) {
+          actionON = Supla::TURN_OFF;
+        }
+        sensor->sensorElementWithChannelActions->addAction(actionON, sensor->client, Supla::ON_TURN_ON);
+        break;
+    }
+  }
+
+  if (strcmp(ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).c_str(), "") != 0) {
+    Serial.print("addConditionForSensorElementWithChannelActions MAX: ");
+    Serial.println(ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).c_str());
+
+    double threshold = ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).toDouble();
+    sensor->sensorElementWithChannelActions->addAction(actionOFF, sensor->client, OnInvalid());
+
+    switch (ConfigManager->get(KEY_CONDITIONS_TYPE)->getElement(nr).toInt()) {
+      case CONDITION_ON_LESS:
+        sensor->sensorElementWithChannelActions->addAction(actionOFF, sensor->client, OnGreaterEq(threshold));
+        break;
+      case CONDITION_ON_GREATER:
+        sensor->sensorElementWithChannelActions->addAction(actionOFF, sensor->client, OnLessEq(threshold));
+        break;
+      case CONDITION_ON_LESS_HUMIDITY:
+        sensor->sensorElementWithChannelActions->addAction(actionOFF, sensor->client, OnGreaterEq(threshold, true));
+        break;
+      case CONDITION_ON_GREATER_HUMIDITY:
+        sensor->sensorElementWithChannelActions->addAction(actionOFF, sensor->client, OnLessEq(threshold, true));
+        break;
+      case CONDITION_GPIO:
+        if (threshold == 1) {
+          actionOFF = Supla::TURN_ON;
+        }
+        sensor->sensorElementWithChannelActions->addAction(actionOFF, sensor->client, Supla::ON_TURN_OFF);
+        break;
+    }
+  }
+}
+
+void addConditionForSensor(ConditionsStruct *sensor, uint8_t nr, int actionON, int actionOFF) {
+  if (strcmp(ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).c_str(), "") != 0) {
+    Serial.print("addConditions MIN: ");
+    Serial.println(ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).c_str());
+
+    double threshold = ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).toDouble();
+    sensor->sensorElement->addAction(actionOFF, sensor->client, OnInvalid());
+
+    switch (ConfigManager->get(KEY_CONDITIONS_TYPE)->getElement(nr).toInt()) {
+      case CONDITION_ON_LESS:
+        sensor->sensorElement->addAction(actionON, sensor->client, OnLessEq(threshold));
+        break;
+      case CONDITION_ON_GREATER:
+        sensor->sensorElement->addAction(actionON, sensor->client, OnGreaterEq(threshold));
+        break;
+      case CONDITION_ON_LESS_HUMIDITY:
+        sensor->sensorElement->addAction(actionON, sensor->client, OnLessEq(threshold, true));
+        break;
+      case CONDITION_ON_GREATER_HUMIDITY:
+        sensor->sensorElement->addAction(actionON, sensor->client, OnGreaterEq(threshold, true));
+        break;
+      case CONDITION_GPIO:
+        if (threshold == 0) {
+          actionON = Supla::TURN_OFF;
+        }
+        sensor->sensorElement->addAction(actionON, sensor->client, Supla::ON_TURN_ON);
+        break;
+    }
+  }
+
+  if (strcmp(ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).c_str(), "") != 0) {
+    Serial.print("addConditions MAX: ");
+    Serial.println(ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).c_str());
+
+    double threshold = ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).toDouble();
+    sensor->sensorElement->addAction(actionOFF, sensor->client, OnInvalid());
+
+    switch (ConfigManager->get(KEY_CONDITIONS_TYPE)->getElement(nr).toInt()) {
+      case CONDITION_ON_LESS:
+        sensor->sensorElement->addAction(actionOFF, sensor->client, OnGreaterEq(threshold));
+        break;
+      case CONDITION_ON_GREATER:
+        sensor->sensorElement->addAction(actionOFF, sensor->client, OnLessEq(threshold));
+        break;
+      case CONDITION_ON_LESS_HUMIDITY:
+        sensor->sensorElement->addAction(actionOFF, sensor->client, OnGreaterEq(threshold, true));
+        break;
+      case CONDITION_ON_GREATER_HUMIDITY:
+        sensor->sensorElement->addAction(actionOFF, sensor->client, OnLessEq(threshold, true));
+        break;
+      case CONDITION_GPIO:
+        if (threshold == 1) {
+          actionOFF = Supla::TURN_ON;
+        }
+        sensor->sensorElement->addAction(actionOFF, sensor->client, Supla::ON_TURN_OFF);
+        break;
+    }
+  }
+}
+
+void addConditionForElectricityMeter(ConditionsStruct *meter, uint8_t nr) {
+  if (strcmp(ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).c_str(), "") != 0) {
+    Serial.print("addConditions MIN - ElectricityMeter: ");
+    Serial.println(ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).c_str());
+
+    double threshold = ConfigManager->get(KEY_CONDITIONS_MIN)->getElement(nr).toDouble();
+    // conditions[nr].electricityMete->addAction(Supla::TURN_OFF, conditions[nr].client, OnInvalid());
+
+    switch (ConfigManager->get(KEY_CONDITIONS_TYPE)->getElement(nr).toInt()) {
+      case CONDITION_ON_LESS_VOLTAGE:
+        meter->electricityMete->addAction(Supla::TURN_ON, meter->client, OnLessEq(threshold, EmVoltage()));
+        break;
+      case CONDITION_ON_LESS_CURRENT:
+        meter->electricityMete->addAction(Supla::TURN_ON, meter->client, OnLessEq(threshold, EmTotalCurrent()));
+        break;
+      case CONDITION_ON_LESS_POWER_ACTIVE:
+        meter->electricityMete->addAction(Supla::TURN_ON, meter->client, OnLessEq(threshold, EmTotalPowerActiveW()));
+        break;
+
+      case CONDITION_ON_GREATER_VOLTAGE:
+        meter->electricityMete->addAction(Supla::TURN_ON, meter->client, OnGreaterEq(threshold, EmVoltage()));
+        break;
+      case CONDITION_ON_GREATER_CURRENT:
+        meter->electricityMete->addAction(Supla::TURN_ON, meter->client, OnGreaterEq(threshold, EmTotalCurrent()));
+        break;
+      case CONDITION_ON_GREATER_POWER_ACTIVE:
+        meter->electricityMete->addAction(Supla::TURN_ON, meter->client, OnGreaterEq(threshold, EmTotalPowerActiveW()));
+        break;
+    }
+  }
+
+  if (strcmp(ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).c_str(), "") != 0) {
+    Serial.print("addConditions MAX - ElectricityMeter: ");
+    Serial.println(ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).c_str());
+
+    double threshold = ConfigManager->get(KEY_CONDITIONS_MAX)->getElement(nr).toDouble();
+    //   meter->electricityMete->addAction(Supla::TURN_OFF, meter->client, OnInvalid());
+
+    switch (ConfigManager->get(KEY_CONDITIONS_TYPE)->getElement(nr).toInt()) {
+      case CONDITION_ON_LESS_VOLTAGE:
+        meter->electricityMete->addAction(Supla::TURN_OFF, meter->client, OnGreaterEq(threshold, EmVoltage()));
+        break;
+      case CONDITION_ON_LESS_CURRENT:
+        meter->electricityMete->addAction(Supla::TURN_OFF, meter->client, OnGreaterEq(threshold, EmTotalCurrent()));
+        break;
+      case CONDITION_ON_LESS_POWER_ACTIVE:
+        meter->electricityMete->addAction(Supla::TURN_OFF, meter->client, OnGreaterEq(threshold, EmTotalPowerActiveW()));
+        break;
+
+      case CONDITION_ON_GREATER_VOLTAGE:
+        meter->electricityMete->addAction(Supla::TURN_OFF, meter->client, OnLessEq(threshold, EmVoltage()));
+        break;
+      case CONDITION_ON_GREATER_CURRENT:
+        meter->electricityMete->addAction(Supla::TURN_OFF, meter->client, OnLessEq(threshold, EmTotalCurrent()));
+        break;
+      case CONDITION_ON_GREATER_POWER_ACTIVE:
+        meter->electricityMete->addAction(Supla::TURN_OFF, meter->client, OnLessEq(threshold, EmTotalPowerActiveW()));
+        break;
+    }
+  }
+}
+
 }  // namespace Conditions
 }  // namespace GUI
 }  // namespace Supla

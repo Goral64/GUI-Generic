@@ -21,13 +21,13 @@
 #include <Wire.h>
 
 #if defined(SUPLA_BME280) || defined(SUPLA_SHT3x) || defined(SUPLA_SI7021) || defined(SUPLA_OLED) || defined(GUI_SENSOR_I2C_EXPENDER) || \
-    defined(SUPLA_BMP280) || defined(SUPLA_VL53L0X) || defined(SUPLA_HDC1080) || defined(SUPLA_LCD_HD44780) || defined(SUPLA_BH1750) ||  \
-    defined(SUPLA_MAX44009) || defined(SUPLA_SHT_AUTODETECT)
+    defined(SUPLA_BMP280) || defined(SUPLA_VL53L0X) || defined(SUPLA_HDC1080) || defined(SUPLA_LCD_HD44780) || defined(SUPLA_BH1750_KPOP) ||  \
+    defined(SUPLA_MAX44009_KPOP) || defined(SUPLA_SHT_AUTODETECT)
 #define GUI_SENSOR_I2C
 #endif
 
 /* Another one to support more sensors settings.*/
-#if defined(SUPLA_MS5611)
+#if defined(SUPLA_MS5611) || defined(SUPLA_AHTX0)
 #define GUI_SENSOR_I2C_2
 #endif
 
@@ -50,16 +50,18 @@ enum _sensor
   SENSOR_SPI_MAX31855,
   SENSOR_I2C_BH1750,
   SENSOR_I2C_MAX44009,
-  SENSOR_I2C_FOR_USE_2,
+  SENSOR_I2C_FOR_USE_2
 };
 
 /*Added to support configuration of more sensors.*/
 enum _sensor2
 {
-  SENSOR_I2C_MS5611
+  SENSOR_I2C_MS5611,
+  SENSOR_SPI_CC1101,
+  SENSOR_I2C_AHTX0
 };
 
-#if defined(GUI_SENSOR_I2C) || defined(GUI_SENSOR_I2C_ENERGY_METER)
+#if defined(GUI_SENSOR_I2C) || defined(GUI_SENSOR_I2C_ENERGY_METER) || defined(GUI_SENSOR_I2C_2)
 
 #if defined(SUPLA_BME280) || defined(SUPLA_BMP280)
 enum _bmeAdress
@@ -142,7 +144,7 @@ void webPageI2CScanner(TwoWire* wire);
 #define INPUT_HDC1080 "ihdc"
 #endif
 
-#ifdef SUPLA_BH1750
+#ifdef SUPLA_BH1750_KPOP
 #define INPUT_BH1750 "ibh"
 #endif
 
@@ -151,7 +153,7 @@ void webPageI2CScanner(TwoWire* wire);
 #define INPUT_ALTITUDE_MS5611 "ams5611"
 #endif
 
-#ifdef SUPLA_MAX44009
+#ifdef SUPLA_MAX44009_KPOP
 #define INPUT_MAX44009 "imax"
 #endif
 
@@ -165,5 +167,18 @@ void webPageI2CScanner(TwoWire* wire);
 #endif
 
 #endif
+
+#if defined(GUI_SENSOR_I2C_2)
+#ifdef SUPLA_AHTX0
+#define INPUT_AHTX0 "aht"
+enum _ahtAdress
+{
+  AHT_ADDRESS_0X38 = 1,
+  AHT_ADDRESS_0X39,
+  AHT_ADDRESS_0X38_AND_0X39
+};
+#endif
+
+#endif // defined(GUI_SENSOR_I2C)
 
 #endif  // ifndef SuplaWebPageSensorI2c_h

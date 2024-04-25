@@ -13,9 +13,9 @@
   along with this program; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
+#ifdef SUPLA_LCD_HD44780
 #include "SuplaLCD.h"
 
-#ifdef SUPLA_LCD_HD44780
 SuplaLCD::SuplaLCD(uint8_t lcdAddr, uint8_t lcdCols, uint8_t lcdRows) {
   int frameCount = 0;
   this->lcdCols = lcdCols;
@@ -78,6 +78,11 @@ SuplaLCD::SuplaLCD(uint8_t lcdAddr, uint8_t lcdCols, uint8_t lcdRows) {
           break;
       }
       if (channel->getChannelType() == SUPLA_CHANNELTYPE_PRESSURESENSOR) {
+        lcdElement[frameCount].chanelSensor = channel->getChannelNumber();
+        lcdElement[frameCount].screenNumbers = frameCount / lcdRows;
+        frameCount += 1;
+      }
+      if (channel->getChannelType() == SUPLA_CHANNELTYPE_GENERAL_PURPOSE_MEASUREMENT) {
         lcdElement[frameCount].chanelSensor = channel->getChannelNumber();
         lcdElement[frameCount].screenNumbers = frameCount / lcdRows;
         frameCount += 1;
@@ -255,6 +260,12 @@ String SuplaLCD::getValueSensor(uint8_t numberSensor) {
         if (channel->getChannelType() == SUPLA_CHANNELTYPE_PRESSURESENSOR) {
           value = String(channel->getValueDouble(), 2);
           value += "hPa";
+        }
+      }
+
+      if (channel->getChannelNumber() == lcdElement[numberSensor].chanelSensor) {
+        if (channel->getChannelType() == SUPLA_CHANNELTYPE_GENERAL_PURPOSE_MEASUREMENT) {
+          value = String(channel->getValueDouble(), 2);
         }
       }
 

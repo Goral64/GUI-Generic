@@ -41,6 +41,7 @@ class EspMqtt : public Mqtt {
   // uint32_t getConnectionFailTime() override;
 
   static Supla::Mutex *mutex;
+  static Supla::Mutex *mutexEventHandler;
   void setConnecting();
   void setConnectionError();
   void setRegisteredAndReady();
@@ -51,6 +52,7 @@ class EspMqtt : public Mqtt {
                           int qos,
                           bool retain) override;
   void subscribeImp(const char *topic, int qos) override;
+  void publishChannelSetup(int channelNumber);
   bool started = false;
   bool enterRegisteredAndReady = false;
   esp_mqtt_client_handle_t client = {};

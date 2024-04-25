@@ -22,6 +22,7 @@
 #include "../element.h"
 
 namespace Supla {
+class Mutex;
 
 enum LedState { NOT_INITIALIZED, ON, OFF };
 
@@ -51,6 +52,9 @@ enum LedSequence {
 class Io;
 
 namespace Device {
+
+const char StatusLedCfgTag[] = "statusled";
+
 class StatusLed : public Element {
  public:
   explicit StatusLed(Supla::Io *io, uint8_t outPin, bool invert = false);
@@ -60,6 +64,7 @@ class StatusLed : public Element {
   void onInit() override;
   void iterateAlways() override;
   void onTimer() override;
+  void onDeviceConfigChange(uint64_t fieldBit) override;
 
   // Use inverted logic for GPIO output, when:
   // false -> HIGH=ON,  LOW=OFF
@@ -77,6 +82,8 @@ class StatusLed : public Element {
 
   // Sets status LED mode
   void setMode(LedMode newMode);
+  LedMode getMode() const;
+  void storeModeToConfig();
 
  protected:
   void updatePin();
@@ -92,6 +99,7 @@ class StatusLed : public Element {
   LedSequence currentSequence = NETWORK_CONNECTING;
   LedMode ledMode = LED_ON_WHEN_CONNECTED;
   Supla::Io *io = nullptr;
+  Supla::Mutex *mutex = nullptr;
 };
 
 }  // namespace Device

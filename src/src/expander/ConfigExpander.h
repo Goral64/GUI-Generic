@@ -15,9 +15,11 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
+#include "../../GUIGenericCommonDefined.h"
+#ifdef GUI_SENSOR_I2C_EXPENDER
 
-#ifndef CONFIG_EXPANDER_PCF8575_H_
-#define CONFIG_EXPANDER_PCF8575_H_
+#ifndef CONFIG_EXPANDER_H_
+#define CONFIG_EXPANDER_H_
 
 #include <supla/io.h>
 #include "../../SuplaCommonPROGMEM.h"
@@ -143,4 +145,5 @@ class ConfigExpander {
 };  // namespace Control
 };  // namespace Supla
 
+#endif
 #endif

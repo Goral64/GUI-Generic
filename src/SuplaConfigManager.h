@@ -19,13 +19,15 @@
 
 #ifdef ARDUINO_ARCH_ESP8266
 #include "FS.h"
-#include <LittleFS.h>
 #elif ARDUINO_ARCH_ESP32
 #include "SPIFFS.h"
 #include <os.h>
 #include <esp_wifi.h>
 #include <time.h>
 #endif
+
+#include <supla/storage/key_value.h>
+#include <supla/storage/storage.h>
 
 #define CURENT_VERSION   1
 #define CONFIG_FILE_PATH "/dat"
@@ -55,8 +57,11 @@
 #define MAX_DIRECT_LINK      5
 #define MAX_VIRTUAL_RELAY    10
 #define MAX_BRIDGE_RF        10
-#define MAX_ANALOG_BUTTON    5
-#define MAX_WAKE_ON_LAN      5
+
+#define MAX_THERMOSTAT 5
+
+#define MAX_ANALOG_BUTTON 5
+#define MAX_WAKE_ON_LAN   5
 
 #ifdef ARDUINO_ARCH_ESP8266
 #define MAX_GPIO 17
@@ -64,8 +69,8 @@
 #define MAX_GPIO 39
 #endif
 
-#define DEFAULT_AT_MULTICLICK_TIME "0.45"
-#define DEFAULT_AT_HOLD_TIME       "0.45"
+#define DEFAULT_AT_MULTICLICK_TIME "0.25"
+#define DEFAULT_AT_HOLD_TIME       "0.4"
 
 enum _key
 {
@@ -157,6 +162,16 @@ enum _key
   // KEY_VERSION_CONFIG,
   KEY_ALTITUDE_MS5611,
   KEY_ACTIVE_SENSOR_2,
+
+  KEY_THERMOSTAT_TYPE,
+  KEY_THERMOSTAT_MAIN_THERMOMETER_CHANNEL,
+  KEY_THERMOSTAT_AUX_THERMOMETER_CHANNEL,
+  KEY_THERMOSTAT_HISTERESIS,
+  KEY_THERMOSTAT_TEMPERATURE_MIN,
+  KEY_THERMOSTAT_TEMPERATURE_MAX,
+  KEY_WMBUS_SENSOR,
+  KEY_WMBUS_SENSOR_ID,
+  KEY_WMBUS_SENSOR_KEY,
   OPTION_COUNT
 };
 
@@ -202,7 +217,7 @@ enum _function
   FUNCTION_SI7021_SONOFF,
   FUNCTION_CLK,
   FUNCTION_CS,
-  FUNCTION_D0,
+  FUNCTION_MISO,
   FUNCTION_IMPULSE_COUNTER,
   FUNCTION_CF,
   FUNCTION_CF1,
@@ -229,6 +244,9 @@ enum _function
   FUNCTION_SDM_TX,
   FUNCTION_SDA_2,
   FUNCTION_SCL_2,
+  FUNCTION_MOSI,
+  FUNCTION_GDO0,
+  FUNCTION_GDO2
 };
 
 enum _e_onfig
@@ -263,7 +281,7 @@ class ConfigOption {
   int getValueInt();
   float getValueFloat();
   bool getValueBool();
-  const char *getValueHex(size_t size);
+  void getValueHex(char* buffer, size_t bufferSize);
   int getValueElement(int element);
 
   int getLength();
@@ -282,9 +300,9 @@ class ConfigOption {
   bool _loadKey;
 };
 
-class SuplaConfigManager {
+class SuplaConfigManager : public Supla::KeyValue {
  public:
-  SuplaConfigManager();
+  explicit SuplaConfigManager();
   bool SPIFFSbegin();
   bool migrationConfig();
   uint8_t addKey(uint8_t key, int maxLength, bool loadKey = true);
@@ -302,14 +320,44 @@ class SuplaConfigManager {
   ConfigOption *get(uint8_t key);
   bool set(uint8_t key, int value);
   bool set(uint8_t key, const char *value);
+
   bool setElement(uint8_t key, int index, int newvalue);
-  bool setElement(uint8_t key, int index, const char *newvalue);
+  bool setElement(uint8_t key, int index, double newvalue);
+  bool setElement(uint8_t key, int index, const String &newvalue);
 
   bool isDeviceConfigured();
   void setGUIDandAUTHKEY();
 
+  bool init() override;
+  void commit() override;
+  void removeAll() override;
+
+  // Supla protocol config
+  virtual bool setSuplaServer(const char *server) override;
+  virtual bool setEmail(const char *email) override;
+  virtual bool setAuthKey(const char *authkey) override;
+  virtual bool setGUID(const char *guid) override;
+  virtual bool setDeviceName(const char *name) override;
+
+  virtual bool getSuplaServer(char *result) override;
+  virtual bool getEmail(char *result) override;
+  virtual bool getGUID(char *result) override;
+  virtual bool getAuthKey(char *result) override;
+  virtual bool getDeviceName(char *result) override;
+
+  // WiFi config
+  bool setWiFiSSID(const char *ssid) override;
+  bool setWiFiPassword(const char *password) override;
+
+  bool getWiFiSSID(char *result) override;
+  bool getWiFiPassword(char *result) override;
+
+  bool getUInt8(const char *key, uint8_t *result) override;
+
  private:
   int _optionCount;
   ConfigOption *_options[CONFIG_MAX_OPTIONS];
+
+  bool setElementInternal(uint8_t key, int index, const String &newvalue);
 };
 #endif

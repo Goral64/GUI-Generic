@@ -1,5 +1,171 @@
 # CHANGELOG.md
 
+## 24.02 (2024-02-14)
+
+  - Fix: StatusLed: disable blinking for sleeping devices when other protocols are connected
+  - Fix: WebServer: fix for invalid checkbox handling on beta web page
+  - Fix: memory usage optimization
+  - Change: Linux HVAC: "aux_thermometer_channel_no" is no longer mandatory
+  - Change: SuplaDevice: default proto version increased to 21 (requires server version at least 23.11)
+  - Change: LastStateLogger and HTML device info: add device uptime (seconds) information.
+  - Change: HVAC: renamed "auto" mode and function to "heat_cool". WARNING: This may break compilation. Please rename all thermostat AUTO names to HEAT_COOL (in defines/consts) and "Auto" to "HeatCool" (in method names)
+  - Change: StatusLed: disable status LED on soft reset state;
+  - Add: GeneralPurposeMeasurement: add support
+  - Add: GeneralPurposeMeter: add support
+  - Add: LittleFsConfig: add option to define max buffer size for larger configs
+  - Add: ExtPCA9685 - adding "setPWMFrequency" method (thanks lukfud)
+  - Add: SuplaDevice: add hostname/wifi ssid generator support for "OH!" Supla devices. Improve method so it won't add "-" at the begining and it won't add duplicated "-".
+  - Add: Button: add ActionHandler interface, add handling of ENABLE, TURN_ON, DISABLE, TURN_OFF, and TOGGLE actions which fully disables/enables the button
+  - Add: Relay: add option to attach() multiple buttons.
+  - Add: Relay: add storing and restoring configured function in Config storage
+  - Add: HTML: add custom checkbox class (thanks lukfud)
+  - Add: Storage: add wear leveling implementation for "byte access and write" memory types (like EEPROM, FRAM)
+  - Add: Storage: add wear leveling implementation for "sector" mode (memory types like FLASH)
+  - Add: Arduino IDE: add examples for GPM (KPOP & KLOP): GPM_BH1750_light_sensor, GP_Measurement, GPM_EspFreeHeap, GPM_MAX44009_light_sensor
+  - Add: new sensors based on GPM added: BH1750, MAX44099, GpmEspFreeHeap
+  - Add: HVAC: add events: ON_HVAC_WEEKLY_SCHEDULE_ENABLED, ON_HVAC_WEEKLY_SCHEDULE_ENABLED, ON_HVAC_WEEKLY_SCHEDULE_DISABLED, ON_HVAC_MODE_OFF, ON_HVAC_MODE_HEAT, ON_HVAC_MODE_COOL, ON_HVAC_MODE_HEAT_COOL
+
+## 23.12 (2023-12-05)
+
+  - Change: HVAC: allow invalid config with invalid main thermometer channel number.  Thermostat will be in "off" with theremometer error.
+  - Change: RGBW, RGB, Dimmer: adjusted fading algorithm for smaller distances (target vs actuall PWM setting)
+  - Change: MQTT: increased max username and password size to 255 chars.
+  - Change: SuplaDevice: clear "LAST STATE" from detailed information about missing parameters in cofniguration in case of startup of fresh device with fully empty config. It will only have "Config mode" last state
+  - Change: Button, ActionHandler: local actions which are "always enabled" are now not added to list of actions which are shown in Cloud as "disablesLocalOperation"
+  - Change: SuplaDevice: enabled remote device config flag by default for proto >= 21
+  - Change: ESP-IDF: version inrement to 5.1.2
+  - Change: Adjusted isAnyUpdatePending method (used for sleeping devices) to runtime channel config support.
+  - Change: SuplaDevice: change reporting "no connection to network" state from 10s to 20s timeout
+  - Fix: HVAC: fix sending config after function being set to "none" and then to proper one
+  - Fix: Linux: fix setting thermometer type for HVAC
+  - Fix: CSS: restored label width 250px
+  - Fix: HTML: fix for not concurent protocol selector HTML (Supla or MQTT)
+  - Fix: ESP8266 RTOS example: update and adjustment to SDK changes. New default sdkconfig values.
+  - Fix: Relay: fix manual turnOn command with no storage and with minimumAllowedDurationMs set
+  - Fix: Clock::isReady fix fox DS1307RTC and DS3231RTC (thanks for @lukfud)
+  - Fix: Uptime: calculation protection against invalid value in millis
+  - Fix: Arduino ESP8266: SSL connection seems to have some memory leak and on each connection restart there is ~1 KB of memory less, which lead to quick OOM situation and board reset. Added Wi-Fi connection restart in case of lost SSL connection, which clears memory properly.
+  - Fix: Arduino ESP8266: skip NTP time check for secured connection when Supla::Clock was already initialized earlier (thanks @lukfud)
+  - Fix: HVAC: fix for multiple "weekly schedule save" problem on function change (thanks @lukfud)
+  - Fix: HVAC: fix returning to manual mode during countdown timer in manual mode with different temperature setpoint
+  - Fix: ESP-IDF: improved reconncetion procedure: add Wi-Fi connection retry on esp-idf level, add timeout for "got ip" event after wifi connection was established, for quicker reconnect, add ignoring first occurence of connection error (i.e. wifi scan may sometimes fail, so first occurence is ignored, but we report it when it repeats).
+  - Fix: StatusLed: add mutex on access to interface methods in order to prevent potential error with led status change during runtime
+  - Add: SuplaDevice: add setShowUptimeInChannelState(bool value) method to enable/disable uptime reporting by device (it may be disabled for deep sleep mode).
+  - Add: PCA9685 expander support (thanks @lukfud)
+  - Add: Hvac: add SUPLA_CHANNEL_FLAG_COUNTDOWN_TIMER_SUPPORTED flag
+  - Add: ESP8266 RTOS: add support for local MQTT
+  - Add: MQTT: add publishing of impulse relay functions (gate, door, garage door, gateway) as "always closed" with "open" button available for integration with step-by-step devices.
+  - Add: MQTT: add support for binary sensor (with Home Assistant autodiscovery)
+  - Add: RGBW, RGB, Dimmer: add option to specify PWM range. Add option to define Supla::Io interface for "leds" classes.
+  - Add: Linux: add script for building the example and cmake improvements
+  - Add: Relay: add minimum allowed duration ms parameter. If there will be turn on will lower (or 0) duration, then minumum value will be enforced.
+  - Add: BinarySensor: add storing and obtaining function set on server
+  - Add: Config: add method to provide default device config on device initialization and on factory reset
+  - Add: Arduino ESP8266, ESP32: add logging SSL connection error to LAST STATE
+  - Add: SuplaDevice: add method isRemoteDeviceConfigEnabled()
+  - Add: ESP-IDF DS18B20: add sensor readout instant refresh after config change
+  - Add: ESP-IDF: add bool guard for calling "disable" method, so it will be executed only when "start" was called before
+
+## 23.11 (2023-11-07)
+
+  - Change: LocalAction: changed variable that holds actions and events to uint16_t
+  - Change: Button: Html fields now allow 200 ms as minimum time to be set (was 300 ms)
+  - Change: Html: HVAC www reorganized
+  - Change: HVAC: add reporting thermometer error when aux temperature protection is enabled, but thermometer reading is missing.
+  - Change: Add handlig of "disabled" function from server (device will not try to send config for this channel to server anymore)
+  - Fix: HVAC: change output behavior to respect min on/off time settings for anti-freeze/overheat protection and aux min/max setpoints.
+  - Fix: HVAC: aux min/max setpoint should not override "off" mode
+  - Fix: Relay: always send timer update to server on reconnect
+  - Fix: HVAC: add earlier cleanup of HVAC flags for some scenarios
+  - Fix: Relay: make sure that attached button was initialized before we read the state. It call onInit on button, so make sure that this method can be called multiple times.
+  - Fix: RGBW, Dimmer: fix invalid value on analog write when turning off channel with configured max limit
+  - Fix: RemoteDeviceConfig: fix handling of home screen off delay config from server
+  - Fix: SRPC layer: add deinitialization of srpc and proto in order to cleanup data buffer on reconnect.
+  - Fix: SuplaDevice: skip saving Storage and Config storage on soft reset request during reset to factory settings
+  - Fix: ImpulseCounter: add initialization of previous GPIO state based on actual reading state from GPIO
+  - Add: ActionTrigger: restored repeated "ON HOLD" action sending, however it has to be configured for >= 1000 ms. Otherwise AT for ON HOLD repeating is disabled.
+  - Add: Html: add screen brightness HTML config
+  - Add: Html CustomParameter: add default value
+  - Add: MQTT: add support for Thermostat in MQTT and HA autodiscovery.
+  - Add: ProtocolLayer: add config change notification
+  - Add: SuplaDevice & Clock: add SUPLA_DEVICE_FLAG_CALCFG_SET_TIME support
+  - Add: HVAC: add method to clear extra delay timestamps (i.e. after config change)
+  - Add: Html: add H3 tag
+  - Add: Html: RgbwButtonParameter - add option to specify custom field label
+  - Add: RemoteDeviceConfig: Add "AjustmentForAutomatic" support for screen brightness. Adjusted HTML.
+  - CSS: add class for input form range
+
+
+## 23.10.01 (2023-10-17)
+
+  - Change: HVAC: rename "screensaver" -> "home screen"
+  - Fix: ESP-IDF MQTT: replace delay(0) with dedicated mutex in order to make sure that MQTT task will get CPU time ASAP
+  - Fix: HVAC: fix for disabling anti-freeze mode when thermostat is off
+  - Fix: BinaryBase: fix for handling channel config. Add handling of default invert state when config on server is missing
+  - Fix: HVAC: add clearing of temperature in struct when value is missing from server
+  - Fix: HVAC: anti-freeze function can be used only when heating mode is allowed. Overheat protection can be used only when cooling mode is allowed.
+  - Fix: HVAC: add aux setpoint min/aux and antifreeze/overheat validation and runtime fix of invalid values
+  - Fix: HVAC: init default temperature setpoint value after subfucntion change
+  - Fix: Storage: invalidate storage when deleteAll was called
+  - Add: HVAC: HVAC: add sending "timer state" extended channel value for timer function
+  - Add: HVAC: add handling of AuxSetpointMinMaxEnabled
+  - Add: HVAC: add button actions: TOGGLE_MANUAL_WEEKLY_SCHEDULE_MODES, TOGGLE_OFF_MANUAL_WEEKLY_SCHEDULE_MODES
+  - Add: MQTT: add support for Dimmer, RGB, and RGBW channel with Home Assistant MQTT Autodiscovery
+  - Add: RGBW, Dimmer, RGB: add support for commands (i.e. set only color, set brightness without turn on, etc.)
+  - Add: RGBW, RGB, Dimmer: add actions for starting and stopping brightness iteration (by server). Add option to disable button local action from local config.
+  - Add: GroupButtonControlRGBW: add class to handle group of RGBWs, RGBs, Dimmers by a single button
+
+## 23.10 (2023-10-02)
+
+  - Change: Correction: method "add" on temperature/humidity correction will modify existing correction if it was added earlier
+  - Change: Arduino Config: moved blob structures to be stored in separate files in "/supla" directory
+  - Change: HVAC: change how FuncList field is used (it stores only bits corresponding with supported functions instead of supported modes).
+  - Change: ESP-IDF: bump esp-idf to 5.1.1
+  - Change: HVAC: manually set temperature should be remembered and restored when manual mode is requested by user
+  - Change: HVAC: change default temperature ranges per function
+  - Fix: add fix for misspelled Supla server domain name svr->srv
+  - Fix: SuplaSrpc: fix server ping problem when uptime is > 50 days
+  - Fix: HVAC: multiple smaller bugfixes
+  - Add: compilation flag SUPLA_EXCLUDE_LITTLEFS_CONFIG to exclude Supla LittleFs config implementation from compliation
+  - Add: Linux: add HVAC channel integration
+  - Add: Linux: add ability to specify proto version in yaml config file
+  - Add: HVAC: add new algorithm "on/off at most" which enables heating when tempeature is below (setpoint - histeresis) and stops heating when setpoint is reached. This is default algorithm for DHW function. Other functions uses "on/off middle" algorithm
+  - Add: Thermometer, ThermHygroMeter, HygroMeter: add ability to share correction configuration with server
+  - Add: HVAC: add support for Domestic Hot Water function
+  - Add: EnterCfgModeAfterPowerCycle: add class to trigger cfg mode after few quick power cycles
+  - Add: BinarySensor: add handling of channel config
+  - Add: HVAC: add handling of forced turn off of thremostat when i.e. window sensor detects open window
+  - Add: HVAC: add "temperature setpoint change switch to manual mode" option for weekly schedule. Add weekly schedule manual override flag
+  - Add: HVAC: add handling of CMD_SWITCH_TO_MANUAL_MODE
+  - Add: BinaryBase: add handling of channel config finished
+  - Add: HVAC: add option to control HVAC via addAction button integration
+  - Add: SuplaDevice: add allowWorkInOfflineMode variant which requires all communication protocols to be disalbed in order to enable offline mode
+
+
+## 23.08.01 (2023-08-17)
+
+  - Change: ESP-IDF example: change partition scheme (factory removed, ota_0 and ota_1 size change to 1.5 M)
+  - Change: Supla common update to proto v21
+  - ESP-IDF SHT30: changed measurement period from 2s to 5s
+  - Fix: ChannelElement: fix runAction (addAction is delegated to Channel, so runAction also should)
+  - Fix: Clock: fix setting system time for esp32 targets
+  - Fix: InternalPinOutput: add additional turnOn/Off during onInit after setting pinMode (in case of ESP32, GPIO state should be set after pinMode).
+  - Fix: Arduino ESP8266: removed timezone setting from NTP request before creating ssl connection
+  - Add HvacBase class for thermostats
+  - Add VirtualImpulseCounter (to count from arbitary source). Add SecondsCounter (counts time of being enabled).
+  - Add handling of "set device/channel config" for device and channel configuration sharign with server
+  - Arduino IDE: add ThermostatBasic example
+  - Linux cmake: add DOWNLOAD_EXTRACT_TIMESTAMP option
+  - Proto, srpc: add methods for get/set device/channel config. Add weekly schedule get/set methods.
+  - Linux compilation: add ccache
+  - FreeRTOS: removed croutine.c from compilation (it was removed from FreeRTOS kernel)
+  - Clock: add static getters for time
+  - ESP-IDF SHT30: add initialization of values during onInit.
+  - ESP-IDF: extracted i2c driver from sht30 (to share it with other devices on the same bus)
+  - Button: add option to disable onLoadConfig
+  - Add ThermometerDriver interface class for reading thermometer value from HW.
+  - ESP-IDF: add ADC driver interface
+
 ## 23.07.01 (2023-07-20)
 
   - Change: default proto version for SuplaDevice changed from 16 to 20 (if you want to use other proto version, please specify it in SuplaDevice.begin(proto_version) call)
